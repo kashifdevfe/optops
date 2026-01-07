@@ -8,18 +8,17 @@ import { errorHandler } from '../src/middleware/error.middleware.js';
 
 const app = express();
 
-// CRITICAL: CORS middleware MUST be first - handle ALL requests
-// This middleware handles CORS for all requests including OPTIONS preflight
+// CRITICAL: CORS middleware MUST be the absolute first middleware
+// Handle ALL requests including OPTIONS preflight BEFORE anything else
 app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin as string | undefined;
   
-  // Set CORS headers for ALL requests - ALWAYS set these headers
+  // CRITICAL: When credentials: true, we CANNOT use '*' - must use specific origin
+  // Always set the origin from the request (browser will send it)
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // Allow all origins if no origin (for debugging)
-    res.setHeader('Access-Control-Allow-Origin', '*');
   }
+  // If no origin, don't set the header (for non-browser requests like curl)
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
@@ -27,23 +26,18 @@ app.use((req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Access-Control-Max-Age', '86400');
   res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type');
   
-  // Handle OPTIONS preflight request - return immediately with proper headers
+  // Handle OPTIONS preflight request - MUST return immediately
+  // This MUST happen before any other middleware runs
   if (req.method === 'OPTIONS') {
-    console.log(`[CORS] OPTIONS preflight from origin: ${origin || 'none'}`);
-    console.log(`[CORS] Request path: ${req.path}`);
-    console.log(`[CORS] Request method: ${req.method}`);
-    return res.status(204).end();
+    console.log(`[CORS] OPTIONS preflight received`);
+    console.log(`[CORS] Origin: ${origin || 'none'}`);
+    console.log(`[CORS] Path: ${req.path}`);
+    console.log(`[CORS] URL: ${req.url}`);
+    console.log(`[CORS] Headers:`, JSON.stringify(req.headers, null, 2));
+    // Send 204 No Content with CORS headers - use send() not end()
+    res.status(204).send();
+    return;
   }
-  
-  // Wrap res.json to ensure CORS headers are always present
-  const originalJson = res.json.bind(res);
-  res.json = function(body: any) {
-    // Ensure CORS headers are set before sending response
-    if (origin) {
-      this.setHeader('Access-Control-Allow-Origin', origin);
-    }
-    return originalJson(body);
-  };
   
   next();
 });
@@ -52,6 +46,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(cors({
   origin: (origin, callback) => {
     // Allow all origins for debugging
+    console.log(`[CORS] cors middleware - origin: ${origin || 'none'}`);
     callback(null, true);
   },
   credentials: true,
@@ -81,6 +76,21 @@ app.use(
   })
 );
 
+// Explicitly handle OPTIONS for all API routes BEFORE mounting routes
+// This is a backup handler in case the middleware doesn't catch it
+app.options('/api/*', (req: Request, res: Response) => {
+  const origin = req.headers.origin as string | undefined;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400');
+  console.log(`[CORS] Explicit OPTIONS handler for /api/* from origin: ${origin || 'none'}`);
+  res.status(204).send();
+});
+
 // Routes
 app.use('/api', routes);
 
@@ -92,6 +102,7 @@ app.get('/health', (req: Request, res: Response) => {
 // 404 handler - ensure CORS headers are set
 app.use((req: Request, res: Response) => {
   const origin = req.headers.origin as string | undefined;
+  // Set CORS headers before sending 404
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   }
