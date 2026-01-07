@@ -47,6 +47,10 @@ export const AuditsPage: React.FC = () => {
     totalInventoryValue: 0,
     totalSalesValue: 0,
     totalDiscrepancies: 0,
+    totalGrossSales: 0,
+    totalCOGS: 0,
+    totalNetProfit: 0,
+    avgProfitMargin: 0,
   });
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);

@@ -23,7 +23,7 @@ export const disableInspect = () => {
     document.body.innerHTML = '<div style="text-align: center;"><h1 style="font-size: 48px; margin-bottom: 20px;">Access Denied</h1><p style="font-size: 24px;">Developer tools are not allowed.</p><p style="font-size: 16px; margin-top: 20px; opacity: 0.7;">Please close developer tools and refresh the page.</p></div>';
     
     // Continuously check and block
-    const blockLoop = setInterval(() => {
+    const _blockLoop = setInterval(() => {
       debugger; // This will pause execution if DevTools is open
       // Redirect after a delay if DevTools remains open
       setTimeout(() => {
@@ -185,8 +185,8 @@ export const disableInspect = () => {
       console.timeEnd = noop;
       console.count = noop;
       console.assert = noop;
-      console.profile = noop;
-      console.profileEnd = noop;
+      if ('profile' in console) (console as any).profile = noop;
+      if ('profileEnd' in console) (console as any).profileEnd = noop;
       
       // Make console.log trigger blocking
       Object.defineProperty(console, 'log', {
@@ -286,9 +286,10 @@ export const disableInspect = () => {
     }, true);
 
     // Disable all mouse right-click variations
-    ['mousedown', 'mouseup', 'contextmenu'].forEach(event => {
-      document.addEventListener(event, (e) => {
-        if (e.button === 2) {
+    (['mousedown', 'mouseup', 'contextmenu'] as const).forEach(event => {
+      document.addEventListener(event, (e: Event) => {
+        const mouseEvent = e as MouseEvent;
+        if (mouseEvent.button === 2) {
           e.preventDefault();
           e.stopPropagation();
           blockApp();

@@ -175,10 +175,10 @@ export const SalaryPage: React.FC = () => {
         // Clean up form data for update - only send non-empty fields
         const updateData: UpdateEmployeeDto = {};
         if (employeeFormData.name) updateData.name = employeeFormData.name;
-        if (employeeFormData.position !== undefined) updateData.position = employeeFormData.position || null;
-        if (employeeFormData.phone !== undefined) updateData.phone = employeeFormData.phone || null;
-        if (employeeFormData.email !== undefined) updateData.email = employeeFormData.email || null;
-        if (employeeFormData.address !== undefined) updateData.address = employeeFormData.address || null;
+        if (employeeFormData.position !== undefined) updateData.position = employeeFormData.position || undefined;
+        if (employeeFormData.phone !== undefined) updateData.phone = employeeFormData.phone || undefined;
+        if (employeeFormData.email !== undefined) updateData.email = employeeFormData.email || undefined;
+        if (employeeFormData.address !== undefined) updateData.address = employeeFormData.address || undefined;
         if (employeeFormData.salary !== undefined) updateData.salary = employeeFormData.salary;
         if (employeeFormData.isActive !== undefined) updateData.isActive = employeeFormData.isActive;
         await salaryApi.updateEmployee(editingEmployee.id, updateData);

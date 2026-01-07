@@ -369,7 +369,7 @@ export const SalesPage: React.FC = () => {
                         const deliveryStatus = getDeliveryDateStatus(sale.deliveryDate);
                         const isCompleted = sale.status === 'completed';
                         
-                        let buttonColor: 'success' | 'warning' | 'error' | 'default' = 'default';
+                        let buttonColor: 'success' | 'warning' | 'error' | 'primary' = 'primary';
                         let icon = null;
                         let tooltipText = isCompleted ? 'Mark as Pending' : 'Mark as Complete';
                         
@@ -550,7 +550,7 @@ export const SalesPage: React.FC = () => {
                 fullWidth
                 label="Remaining"
                 type="number"
-                value={formData.total - formData.received}
+                value={formData.total - (formData.received || 0)}
                 disabled
               />
             </Grid>
