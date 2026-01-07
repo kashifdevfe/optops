@@ -2,12 +2,16 @@ import { Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../utils/jwt.js';
 import { AuthenticatedRequest } from '../types/index.js';
 import prisma from '../config/database.js';
+import { setCorsHeaders } from '../utils/cors.js';
 
 export const authenticate = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const token = req.cookies?.accessToken || req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
+      // CRITICAL: Set CORS headers before sending auth error
+      const origin = req.headers.origin as string | undefined;
+      setCorsHeaders(res, origin);
       res.status(401).json({ error: 'Authentication required' });
       return;
     }
@@ -26,6 +30,9 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
     });
 
     if (!user || !user.isActive) {
+      // CRITICAL: Set CORS headers before sending auth error
+      const origin = req.headers.origin as string | undefined;
+      setCorsHeaders(res, origin);
       res.status(401).json({ error: 'Invalid or inactive user' });
       return;
     }
@@ -36,6 +43,9 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
     });
 
     if (!company || !company.isActive) {
+      // CRITICAL: Set CORS headers before sending auth error
+      const origin = req.headers.origin as string | undefined;
+      setCorsHeaders(res, origin);
       res.status(401).json({ error: 'Invalid or inactive company' });
       return;
     }
@@ -46,6 +56,9 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
 
     next();
   } catch (error) {
+    // CRITICAL: Set CORS headers before sending auth error
+    const origin = req.headers.origin as string | undefined;
+    setCorsHeaders(res, origin);
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
