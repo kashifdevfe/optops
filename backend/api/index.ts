@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
@@ -8,36 +8,35 @@ import { errorHandler } from '../src/middleware/error.middleware.js';
 
 const app = express();
 
-// CRITICAL: CORS must be the FIRST middleware - handle ALL requests including OPTIONS
-app.use((req, res, next) => {
-  // Get origin from request
+// CRITICAL: CORS middleware MUST be first - handle ALL requests
+// This middleware handles CORS for all requests including OPTIONS preflight
+app.use((req: Request, res: Response, next: NextFunction) => {
   const origin = req.headers.origin;
   
   // Set CORS headers for ALL requests
   if (origin) {
     res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    res.setHeader('Access-Control-Allow-Origin', '*');
   }
   
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+  res.setHeader('Access-Control-Max-Age', '86400');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Type');
   
-  // Handle preflight OPTIONS request - MUST return immediately
+  // Handle OPTIONS preflight request - return immediately
   if (req.method === 'OPTIONS') {
-    res.status(204).end();
-    return;
+    console.log(`[CORS] OPTIONS preflight from origin: ${origin}`);
+    return res.status(204).end();
   }
   
   next();
 });
 
-// Use cors middleware as additional layer
+// Additional CORS middleware as backup
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow all origins for now
+    // Allow all origins for debugging
     callback(null, true);
   },
   credentials: true,
@@ -71,12 +70,25 @@ app.use(
 app.use('/api', routes);
 
 // Health check
-app.get('/health', (req, res) => {
+app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
+// CORS test endpoint
+app.get('/api/cors-test', (req: Request, res: Response) => {
+  res.json({ 
+    message: 'CORS is working',
+    origin: req.headers.origin,
+    method: req.method 
+  });
+});
+
+app.options('/api/cors-test', (req: Request, res: Response) => {
+  res.status(204).end();
+});
+
 // 404 handler
-app.use((req, res) => {
+app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
@@ -84,4 +96,5 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 // Export for Vercel serverless
+// Vercel's @vercel/node automatically wraps Express apps
 export default app;
