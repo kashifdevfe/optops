@@ -5,10 +5,10 @@ import { ThemeProvider, CssBaseline } from '@mui/material';
 import App from './App';
 import { theme } from './theme';
 import { CartProvider } from './context/CartContext';
-import { disableInspect } from './utils/disableInspect';
+// import { disableInspect } from './utils/disableInspect';
 
-// Disable inspect mode (always enabled)
-disableInspect();
+// Disable inspect mode - DISABLED
+// disableInspect();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.js';
-import { disableInspect } from './utils/disableInspect.js';
+// import { disableInspect } from './utils/disableInspect.js';
 
-// Disable inspect mode (always enabled)
-disableInspect();
+// Disable inspect mode - DISABLED
+// disableInspect();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   // Note: React.StrictMode intentionally double-invokes effects in development
