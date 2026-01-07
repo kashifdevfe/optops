@@ -199,15 +199,20 @@ export const disableInspect = () => {
   }
 
   // Multiple DevTools detection methods (only in production)
+  // Made less aggressive - only block when DevTools is actually opened, not on page load
   if (isProduction) {
+    let detectionCount = 0;
+    const REQUIRED_DETECTIONS = 3; // Require multiple detections before blocking
+    
     const detectDevTools = () => {
-      // Method 1: Window size difference (more lenient threshold)
-      const threshold = 200; // Increased threshold to avoid false positives
+      // Method 1: Window size difference (very lenient threshold)
+      const threshold = 300; // Increased threshold to avoid false positives
       const heightDiff = window.outerHeight - window.innerHeight;
       const widthDiff = window.outerWidth - window.innerWidth;
       
       if (heightDiff > threshold || widthDiff > threshold) {
-        if (!devtoolsOpen) {
+        detectionCount++;
+        if (detectionCount >= REQUIRED_DETECTIONS && !devtoolsOpen) {
           devtoolsOpen = true;
           blockApp();
         }
@@ -218,57 +223,61 @@ export const disableInspect = () => {
       const start = performance.now();
       debugger; // This will pause if DevTools is open
       const end = performance.now();
-      if (end - start > 200) { // Increased threshold
-        if (!devtoolsOpen) {
+      if (end - start > 500) { // Increased threshold significantly
+        detectionCount++;
+        if (detectionCount >= REQUIRED_DETECTIONS && !devtoolsOpen) {
           devtoolsOpen = true;
           blockApp();
         }
         return true;
       }
 
-      // Method 3: Console detection
+      // Method 3: Console detection (less aggressive)
       let devtools = false;
       const element = new Image();
       Object.defineProperty(element, 'id', {
         get: () => {
           devtools = true;
-          if (!devtoolsOpen) {
-            devtoolsOpen = true;
-            blockApp();
-          }
         }
       });
       console.log('%c', element);
       
       if (devtools) {
+        detectionCount++;
+        if (detectionCount >= REQUIRED_DETECTIONS && !devtoolsOpen) {
+          devtoolsOpen = true;
+          blockApp();
+        }
         return true;
       }
 
+      // Reset counter if no detection
+      if (detectionCount > 0) {
+        detectionCount = Math.max(0, detectionCount - 1);
+      }
       devtoolsOpen = false;
       return false;
     };
 
-    // Check for DevTools every 500ms (less frequent to avoid false positives)
-    setInterval(detectDevTools, 500);
+    // Disabled automatic detection to avoid false positives
+    // Only block when keyboard shortcuts are used
+    // setInterval(detectDevTools, 500);
+    // window.addEventListener('resize', detectDevTools);
 
-    // Also check on window resize
-    window.addEventListener('resize', detectDevTools);
-
-    // Block DevTools via iframe detection
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    document.body.appendChild(iframe);
-    
-    setInterval(() => {
-      try {
-        if (iframe.contentWindow && iframe.contentWindow.outerHeight !== iframe.contentWindow.innerHeight) {
-          blockApp();
-        }
-      } catch (e) {
-        // Cross-origin restriction means DevTools might be open
-        blockApp();
-      }
-    }, 1000);
+    // Disabled iframe detection to avoid false positives
+    // Only block when keyboard shortcuts are used
+    // const iframe = document.createElement('iframe');
+    // iframe.style.display = 'none';
+    // document.body.appendChild(iframe);
+    // setInterval(() => {
+    //   try {
+    //     if (iframe.contentWindow && iframe.contentWindow.outerHeight !== iframe.contentWindow.innerHeight) {
+    //       blockApp();
+    //     }
+    //   } catch (e) {
+    //     blockApp();
+    //   }
+    // }, 1000);
   }
 
   // Prevent DevTools from being opened via menu (only in production)
@@ -285,14 +294,14 @@ export const disableInspect = () => {
       }
     }, true);
 
-    // Disable all mouse right-click variations
+    // Disable all mouse right-click variations (prevent but don't block app)
     (['mousedown', 'mouseup', 'contextmenu'] as const).forEach(event => {
       document.addEventListener(event, (e: Event) => {
         const mouseEvent = e as MouseEvent;
         if (mouseEvent.button === 2) {
           e.preventDefault();
           e.stopPropagation();
-          blockApp();
+          // Don't block app on right-click, just prevent context menu
           return false;
         }
       }, true);
