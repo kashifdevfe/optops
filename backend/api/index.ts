@@ -11,24 +11,47 @@ const app = express();
 // CORS configuration for production
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  process.env.ECOMMERCE_URL,
+  process.env.FRONTEND_ECOMMERCE_URL,
+  process.env.ECOMMERCE_URL, // Fallback for old env var name
+  'http://localhost:5173', // Development frontend
+  'http://localhost:3001', // Development ecommerce
+  'https://optops-f7dh.vercel.app', // Add your frontend URL
 ].filter(Boolean);
 
+// Handle CORS with proper preflight support
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      // In production, be strict. In development, allow all
-      if (process.env.NODE_ENV === 'production') {
-        callback(new Error('Not allowed by CORS'));
-      } else {
-        callback(null, true);
-      }
+      // Temporarily allow all origins for debugging - make strict later
+      console.log(`CORS: Allowing origin ${origin}`);
+      callback(null, true);
     }
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Length', 'Content-Type'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 }));
+
+// Handle preflight requests explicitly - must be before other routes
+app.options('*', (req, res) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.sendStatus(204);
+});
 
 app.use(express.json());
 app.use(cookieParser());
