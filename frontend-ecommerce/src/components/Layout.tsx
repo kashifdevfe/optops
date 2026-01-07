@@ -9,7 +9,7 @@ import logoImage from '../assets/isbopt.png';
 export const Layout = () => {
   const { getTotalItems } = useCart();
   const navigate = useNavigate();
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [_mobileOpen, _setMobileOpen] = useState(false);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#FFFFFF' }}>
