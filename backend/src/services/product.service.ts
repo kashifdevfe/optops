@@ -48,7 +48,10 @@ export const productService = {
 
     if (filters?.featured !== undefined) {
       // Convert string to boolean if needed
-      where.featured = filters.featured === true || filters.featured === 'true' || filters.featured === '1';
+      const featuredValue = filters.featured;
+      where.featured = typeof featuredValue === 'boolean' 
+        ? featuredValue 
+        : featuredValue === 'true' || featuredValue === '1';
     }
 
     const products = await prisma.ecommerceProduct.findMany({

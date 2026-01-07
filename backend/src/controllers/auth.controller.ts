@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import { authService } from '../services/auth.service.js';
 import { config } from '../config/env.js';
-import { AuthenticatedRequest } from '../types/index.js';
 
 export const authController = {
   async signup(req: Request, res: Response): Promise<void> {
@@ -89,7 +88,7 @@ export const authController = {
     }
   },
 
-  async resetPassword(req: Request, res: Response): Promise<void> {
-    res.status(501).json({ error: 'Not implemented' });
+  async resetPassword(_req: Request, _res: Response): Promise<void> {
+    _res.status(501).json({ error: 'Not implemented' });
   },
 };

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { adminService } from '../services/admin.service.js';
 import { AuthenticatedRequest } from '../types/index.js';
 
@@ -59,7 +59,7 @@ export const adminController = {
     }
   },
 
-  async getAllCompanies(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getAllCompanies(_req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const companies = await adminService.getAllCompanies();
       res.json(companies);
@@ -82,7 +82,7 @@ export const adminController = {
     }
   },
 
-  async getAllCustomers(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async getAllCustomers(_req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const customers = await adminService.getAllCustomers();
       res.json(customers);

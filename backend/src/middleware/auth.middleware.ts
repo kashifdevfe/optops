@@ -51,7 +51,7 @@ export const authenticate = async (req: AuthenticatedRequest, res: Response, nex
 };
 
 // Optional authentication - sets companyId if token is present, but doesn't fail if not
-export const optionalAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+export const optionalAuth = async (req: AuthenticatedRequest, _res: Response, next: NextFunction): Promise<void> => {
   try {
     const token = req.cookies?.accessToken || req.headers.authorization?.replace('Bearer ', '');
 

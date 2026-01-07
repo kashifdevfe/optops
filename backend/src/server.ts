@@ -2,17 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import SQLiteStore from 'connect-sqlite3';
 import helmet from 'helmet';
 import { config } from './config/env.js';
 import routes from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -71,21 +64,10 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// Ensure sessions directory exists
-const sessionsDir = path.join(__dirname, '../prisma');
-if (!fs.existsSync(sessionsDir)) {
-  fs.mkdirSync(sessionsDir, { recursive: true });
-}
-
-// Session configuration for admin with SQLite store
-const SQLiteStoreSession = SQLiteStore(session);
+// Session configuration - Use memory store (works for both dev and production)
+// For production with persistent sessions, consider Redis or PostgreSQL session store
 app.use(
   session({
-    store: new SQLiteStoreSession({
-      db: 'sessions.db',
-      dir: sessionsDir,
-      table: 'sessions',
-    }),
     name: 'admin.sid',
     secret: process.env.SESSION_SECRET || 'optops-admin-secret-key-change-in-production',
     resave: false,
@@ -102,12 +84,12 @@ app.use(
 
 app.use('/api', routes);
 
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
 // 404 handler for unmatched routes
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 

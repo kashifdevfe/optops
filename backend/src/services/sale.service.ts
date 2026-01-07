@@ -149,7 +149,7 @@ export const saleService = {
 
     // Deduct inventory before creating sale (this reduces stock and tracks value)
     try {
-      const inventoryDeduction = await this.deductInventory(companyId, data.frame, data.lens);
+      await this.deductInventory(companyId, data.frame, data.lens);
       // Inventory value is automatically reduced because stock is decremented
       // Total inventory value = sum of (totalStock * unitPrice) for all items
       // This will be reflected in audits which calculate based on current stock

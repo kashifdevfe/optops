@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { auditService } from '../services/audit.service.js';
 import { AuthenticatedRequest } from '../types/index.js';
-import { validateRequest } from '../middleware/validation.middleware.js';
 import { getAuditsQuerySchema, createAuditSchema, updateAuditSchema } from '../dto/audit.dto.js';
 
 export const auditController = {

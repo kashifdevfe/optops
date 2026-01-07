@@ -13,7 +13,7 @@ export interface SessionData extends Session {
   isAdmin?: boolean;
 }
 
-export interface AuthenticatedRequest extends Request {
+export interface AuthenticatedRequest extends Omit<Request, 'session'> {
   companyId?: string;
   userId?: string;
   user?: {
