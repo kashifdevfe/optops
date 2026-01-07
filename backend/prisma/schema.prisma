@@ -1,0 +1,351 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id             String          @id @default(cuid())
+  name           String
+  email          String          @unique
+  password       String
+  address        String?
+  phone          String?
+  whatsapp       String?
+  isActive       Boolean         @default(true)
+  ecommerceEnabled Boolean       @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  audit_logs     audit_logs[]
+  audits         Audit[]
+  categories     Category[]
+  customers      Customer[]
+  inventoryItems InventoryItem[]
+  refreshTokens  RefreshToken[]
+  sales          Sale[]
+  themeSettings  ThemeSettings?
+  users          User[]
+  ecommerceProducts EcommerceProduct[]
+  ecommerceOrders    EcommerceOrder[]
+  employees      Employee[]
+  salaries       Salary[]
+  bills          Bill[]
+
+  @@map("companies")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String
+  name      String
+  password  String
+  role      String   @default("user")
+  isActive  Boolean  @default(true)
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([email, companyId])
+  @@map("users")
+}
+
+model ThemeSettings {
+  id              String   @id @default(cuid())
+  companyId       String   @unique
+  primaryColor    String   @default("#D4AF37")
+  secondaryColor  String   @default("#FFD700")
+  backgroundColor String   @default("#FFFFFF")
+  surfaceColor    String   @default("#F5F5F5")
+  textColor       String   @default("#000000")
+  fontFamily      String   @default("Inter, sans-serif")
+  logoUrl         String?
+  uiConfig        String   @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("theme_settings")
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  companyId String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  address   String
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sales     Sale[]
+
+  @@map("customers")
+}
+
+model Sale {
+  id               String    @id @default(cuid())
+  orderNo          String
+  customerId       String
+  rightEyeSphere   String    @default("0")
+  rightEyeCylinder String    @default("0")
+  rightEyeAxis     String    @default("0")
+  leftEyeSphere    String    @default("0")
+  leftEyeCylinder  String    @default("0")
+  leftEyeAxis      String    @default("0")
+  nearAdd          String    @default("0")
+  total            Float
+  received         Float     @default(0)
+  remaining        Float     @default(0)
+  frame            String
+  lens             String
+  entryDate        DateTime?
+  deliveryDate     DateTime?
+  status           String    @default("pending")
+  companyId        String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  customer         Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  company          Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("sales")
+}
+
+model Category {
+  id         String          @id @default(cuid())
+  name       String
+  type       String?         // 'Frame' or 'Lens'
+  companyId  String
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  company    Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items      InventoryItem[]
+
+  @@unique([name, companyId])
+  @@map("categories")
+}
+
+model InventoryItem {
+  id            String      @id @default(cuid())
+  name          String
+  unitPrice     Float        // Cost price (purchase price)
+  itemCode      String
+  totalStock    Int          @default(0)
+  categoryId   String
+  companyId    String
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  category      Category     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  company       Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  auditItems    AuditItem[]
+
+  @@map("inventory_items")
+}
+
+model Audit {
+  id                String      @id @default(cuid())
+  auditDate         DateTime    @default(now())
+  startDate         DateTime?   // Start date for audit period
+  endDate           DateTime?   // End date for audit period
+  period            String?     // 'week', 'month', 'year', or null for custom (deprecated, kept for backward compatibility)
+  notes             String?
+  totalInventoryValue Float     @default(0)
+  totalSalesValue   Float       @default(0)
+  grossSales        Float       @default(0)  // Total sales revenue
+  costOfGoodsSold   Float       @default(0)  // COGS (cost of frames + lenses sold)
+  netProfit         Float       @default(0)  // Gross Sales - COGS
+  profitMargin      Float       @default(0)  // (Net Profit / Gross Sales) * 100
+  includeExpenses   Boolean     @default(false)  // Whether to include bills and salaries
+  totalExpenses     Float       @default(0)  // Total bills + salaries for the period
+  finalNetProfit    Float       @default(0)  // Net Profit - Total Expenses
+  categoryBreakdown String?     // JSON string with category-wise breakdown
+  companyId         String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  company Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items   AuditItem[]
+
+  @@map("audits")
+}
+
+model AuditItem {
+  id                String   @id @default(cuid())
+  auditId           String
+  inventoryItemId   String
+  expectedQuantity  Int
+  actualQuantity    Int
+  discrepancy       Int      @default(0)
+  unitPrice         Float
+  totalValue        Float
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  audit         Audit          @relation(fields: [auditId], references: [id], onDelete: Cascade)
+  inventoryItem InventoryItem? @relation(fields: [inventoryItemId], references: [id], onDelete: Restrict)
+
+  @@map("audit_items")
+}
+
+model audit_logs {
+  id          String   @id
+  companyId   String
+  userId      String
+  userName    String
+  action      String
+  entityType  String
+  entityId    String
+  description String
+  oldValue    String?
+  newValue    String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  companies   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([companyId, createdAt])
+}
+
+model EcommerceProduct {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  images      String
+  category    String
+  gender      String?
+  frameType   String?
+  lensType    String?
+  frameSize   String?
+  inStock     Boolean  @default(true)
+  stockCount  Int      @default(0)
+  featured    Boolean  @default(false)
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  orderItems  EcommerceOrderItem[]
+
+  @@map("ecommerce_products")
+}
+
+model EcommerceOrder {
+  id              String   @id @default(cuid())
+  orderNumber     String   @unique
+  customerName    String
+  customerPhone   String
+  customerAddress String
+  prescriptionNotes String?
+  // Custom order fields
+  isCustomOrder   Boolean  @default(false)
+  frameName       String?
+  rightEyeSphere   String?
+  rightEyeCylinder String?
+  rightEyeAxis     String?
+  leftEyeSphere    String?
+  leftEyeCylinder  String?
+  leftEyeAxis      String?
+  nearAdd          String?
+  status          String   @default("pending")
+  totalAmount     Float
+  companyId       String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items           EcommerceOrderItem[]
+
+  @@map("ecommerce_orders")
+}
+
+model EcommerceOrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int      @default(1)
+  price     Float
+  product   EcommerceProduct @relation(fields: [productId], references: [id], onDelete: Restrict)
+  order     EcommerceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("ecommerce_order_items")
+}
+
+model Employee {
+  id        String   @id @default(cuid())
+  name      String
+  position  String?
+  phone     String?
+  email     String?
+  address   String?
+  salary    Float    @default(0)  // Monthly salary amount
+  isActive  Boolean  @default(true)
+  companyId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  salaries  Salary[]
+
+  @@map("employees")
+}
+
+model Salary {
+  id          String   @id @default(cuid())
+  employeeId String
+  amount      Float
+  month       Int      // 1-12
+  year        Int
+  paymentDate DateTime?
+  status      String   @default("pending") // pending, paid, overdue
+  notes       String?
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, month, year, companyId])
+  @@map("salaries")
+}
+
+model Bill {
+  id          String   @id @default(cuid())
+  description String
+  amount      Float
+  category    String?  // e.g., "Utilities", "Rent", "Supplies", "Other"
+  dueDate     DateTime
+  paymentDate DateTime?
+  status      String   @default("outstanding") // outstanding, paid, overdue
+  notes       String?
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("bills")
+}
+
+model SuperAdmin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("super_admins")
+}
