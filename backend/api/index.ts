@@ -8,53 +8,51 @@ import { errorHandler } from '../src/middleware/error.middleware.js';
 
 const app = express();
 
-// CORS configuration - manually handle CORS for Vercel serverless
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.FRONTEND_ECOMMERCE_URL,
-  process.env.ECOMMERCE_URL,
-  'http://localhost:5173',
-  'http://localhost:3001',
-  'https://optops-f7dh.vercel.app',
-].filter(Boolean);
-
-// Manual CORS middleware - handle all requests including OPTIONS
+// CRITICAL: CORS must be the FIRST middleware - handle ALL requests including OPTIONS
 app.use((req, res, next) => {
+  // Get origin from request
   const origin = req.headers.origin;
   
-  // Allow all origins for now (for debugging)
+  // Set CORS headers for ALL requests
   if (origin) {
-    res.header('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Origin', origin);
   } else {
-    res.header('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Origin', '*');
   }
   
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-  res.header('Access-Control-Allow-Credentials', 'true');
-  res.header('Access-Control-Expose-Headers', 'Content-Length, Content-Type');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
   
-  // Handle preflight OPTIONS request
+  // Handle preflight OPTIONS request - MUST return immediately
   if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
+    res.status(204).end();
+    return;
   }
   
   next();
 });
 
-// Also use cors middleware as backup
+// Use cors middleware as additional layer
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: (origin, callback) => {
+    // Allow all origins for now
+    callback(null, true);
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  exposedHeaders: ['Content-Length', 'Content-Type'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 }));
 
+// Body parsing
 app.use(express.json());
 app.use(cookieParser());
 
-// Session configuration - Use memory store for serverless (sessions won't persist across invocations)
-// For production, consider using Redis or PostgreSQL session store
+// Session configuration
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'change-me-in-production',
@@ -69,17 +67,21 @@ app.use(
   })
 );
 
+// Routes
 app.use('/api', routes);
 
+// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
+// Error handler
 app.use(errorHandler);
 
+// Export for Vercel serverless
 export default app;
-
