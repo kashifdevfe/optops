@@ -5,6 +5,11 @@ import { signupSchema, loginSchema, refreshTokenSchema, forgotPasswordSchema, re
 
 const router = Router();
 
+// Handle OPTIONS for all routes in this router
+router.options('*', (_req, res) => {
+  res.status(204).end();
+});
+
 router.post('/signup', validate(signupSchema), authController.signup);
 router.post('/login', validate(loginSchema), authController.login);
 router.post('/refresh', validate(refreshTokenSchema), authController.refresh);

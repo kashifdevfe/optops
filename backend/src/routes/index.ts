@@ -16,6 +16,11 @@ import adminRoutes from './admin.routes.js';
 
 const router = Router();
 
+// Handle OPTIONS for all routes - CORS preflight
+router.options('*', (_req, res) => {
+  res.status(204).end();
+});
+
 router.use('/auth', authRoutes);
 router.use('/admin', adminRoutes);
 router.use('/company', companyRoutes);

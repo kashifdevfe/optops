@@ -74,19 +74,6 @@ app.get('/health', (req: Request, res: Response) => {
   res.json({ status: 'ok' });
 });
 
-// CORS test endpoint
-app.get('/api/cors-test', (req: Request, res: Response) => {
-  res.json({ 
-    message: 'CORS is working',
-    origin: req.headers.origin,
-    method: req.method 
-  });
-});
-
-app.options('/api/cors-test', (req: Request, res: Response) => {
-  res.status(204).end();
-});
-
 // 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
