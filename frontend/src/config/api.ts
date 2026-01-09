@@ -7,7 +7,7 @@ const getApiBaseURL = () => {
 
   // In production, use the full backend URL
   if (import.meta.env.PROD) {
-    return 'https://backend-8bufyhvwf-kashifmhmds-projects.vercel.app';
+    return 'https://optops.vercel.app';
   }
 
   // In development, use relative path for Vite proxy
