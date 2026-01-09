@@ -8,13 +8,23 @@ import { errorHandler } from '../src/middleware/error.middleware.js';
 
 const app = express();
 
-// Use standard CORS package with specific origin to match Vercel config
-app.use(cors({
-  origin: 'https://optops-f7dh.vercel.app',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['X-CSRF-Token', 'X-Requested-With', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Content-Type', 'Date', 'X-Api-Version', 'Authorization'],
-}));
+// CORS Configuration - Allow ALL origins for now to debug
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Set CORS headers manually for maximum compatibility
+  const origin = req.headers.origin || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token, Accept-Version, Content-Length, Content-MD5, Date, X-Api-Version');
+  res.setHeader('Access-Control-Max-Age', '86400');
+
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  next();
+});
 
 // Body parsing
 app.use(express.json());
@@ -30,19 +40,17 @@ app.use(
       secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000,
-      sameSite: 'lax',
+      sameSite: 'none', // Changed to 'none' for cross-origin cookies
     },
   })
 );
 
-// Explicitly handle OPTIONS for all API routes BEFORE mounting routes
-// This is a backup handler in case the middleware doesn't catch it
 // Routes
 app.use('/api', routes);
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
-  res.json({ status: 'ok' });
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // 404 handler
@@ -54,5 +62,4 @@ app.use((req: Request, res: Response) => {
 app.use(errorHandler);
 
 // Export for Vercel serverless
-// Vercel's @vercel/node automatically wraps Express apps
 export default app;

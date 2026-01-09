@@ -1,10 +1,16 @@
-// Use relative path to leverage Vite proxy (works with CSP 'self')
-// This makes API calls appear as same-origin, which is more secure
+// API Base URL Configuration
 const getApiBaseURL = () => {
+  // Check for environment variable first
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // Use proxy path in both dev and production (Vite proxy handles dev, server handles prod)
+
+  // In production, use the full backend URL
+  if (import.meta.env.PROD) {
+    return 'https://backend-8bufyhvwf-kashifmhmds-projects.vercel.app';
+  }
+
+  // In development, use relative path for Vite proxy
   return '/api';
 };
 
