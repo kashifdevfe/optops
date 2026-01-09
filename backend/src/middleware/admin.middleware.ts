@@ -9,15 +9,18 @@ export const requireAdmin = async (req: AuthenticatedRequest, res: Response, nex
     const token = req.cookies?.accessToken || req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
-      res.status(401).json({ error: 'Authentication required' });
+      console.log('Admin Middleware: No token provided');
+      res.status(401).json({ error: 'Authentication required (No Token)' });
       return;
     }
 
     const decoded = verifyAccessToken(token) as any; // Cast to any to access role if not in type
+    console.log('Admin Middleware: Decoded token:', JSON.stringify(decoded, null, 2));
 
     // Check if it's an admin token
     if (decoded.role !== 'super-admin') {
-      res.status(403).json({ error: 'Super Admin access required' });
+      console.log('Admin Middleware: Role mismatch. Expected super-admin, got:', decoded.role);
+      res.status(403).json({ error: `Super Admin access required (Role mismatch: ${decoded.role})` });
       return;
     }
 
@@ -28,7 +31,8 @@ export const requireAdmin = async (req: AuthenticatedRequest, res: Response, nex
     });
 
     if (!superAdmin || !superAdmin.isActive) {
-      res.status(403).json({ error: 'Super Admin access required' });
+      console.log('Admin Middleware: Admin not found or inactive in DB for ID:', decoded.userId);
+      res.status(403).json({ error: `Super Admin access required (Admin not found in DB: ${decoded.userId})` });
       return;
     }
 
