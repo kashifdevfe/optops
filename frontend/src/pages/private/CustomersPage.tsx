@@ -38,7 +38,38 @@ export const CustomersPage: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [promotionOpen, setPromotionOpen] = useState(false);
+  const [promotionMessage, setPromotionMessage] = useState('');
   const loadingRef = useRef(false); // Prevent duplicate calls
+
+  const handleSendPromotion = () => {
+    // Extract numbers
+    const numbers = customers
+      .map(c => c.phone)
+      .filter(p => p) // Remove empty
+      .map(p => {
+        // Basic cleanup
+        let clean = p.replace(/[^\d+]/g, '');
+        if (!clean.startsWith('+') && clean.startsWith('0')) {
+          clean = '92' + clean.substring(1); // Default to local code if simple 0 start
+        }
+        return clean;
+      });
+
+    // Unique numbers only
+    const uniqueNumbers = [...new Set(numbers)];
+
+    // Copy to clipboard (comma separated for most tools)
+    const clipboardText = uniqueNumbers.join(',');
+
+    navigator.clipboard.writeText(clipboardText).then(() => {
+      alert(`Copied ${uniqueNumbers.length} phone numbers to clipboard!`);
+      setPromotionOpen(false);
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      alert('Failed to copy numbers. Please try again.');
+    });
+  };
 
   useEffect(() => {
     // Prevent duplicate calls (especially important with React.StrictMode)
@@ -141,7 +172,10 @@ export const CustomersPage: React.FC = () => {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           Manage your customer database
         </Typography>
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Button variant="outlined" startIcon={<EditIcon />} onClick={() => setPromotionOpen(true)}>
+            Send Promotion
+          </Button>
           <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpen()}>
             Add Customer
           </Button>
@@ -237,6 +271,28 @@ export const CustomersPage: React.FC = () => {
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={success}>
             {editingCustomer ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={promotionOpen} onClose={() => setPromotionOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Send Promotion</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            To send a message to all customers, we will copy their phone numbers to your clipboard. You can then paste them into a WhatsApp Broadcast list or Bulk SMS tool.
+          </Typography>
+          <TextField
+            fullWidth
+            label="Message (Optional - for your reference)"
+            multiline
+            rows={4}
+            value={promotionMessage}
+            onChange={(e) => setPromotionMessage(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setPromotionOpen(false)}>Cancel</Button>
+          <Button onClick={handleSendPromotion} variant="contained">
+            Copy All Numbers
           </Button>
         </DialogActions>
       </Dialog>
