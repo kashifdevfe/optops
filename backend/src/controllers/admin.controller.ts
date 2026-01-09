@@ -32,7 +32,7 @@ export const adminController = {
     }
   },
 
-  async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
+  async logout(_req: AuthenticatedRequest, res: Response): Promise<void> {
     // Stateless logout - client just discards token
     res.json({ message: 'Logged out successfully' });
   },

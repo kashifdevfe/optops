@@ -13,14 +13,10 @@ export const AdminProtectedRoute: React.FC<AdminProtectedRouteProps> = ({ childr
 
   useEffect(() => {
     const checkAuth = async () => {
-      try {
-        // Try to access a protected endpoint to verify super admin session
-        await adminApi.getCompanies();
+      const token = localStorage.getItem('accessToken');
+      if (token) {
         setIsAuthenticated(true);
-      } catch (error: any) {
-        console.error('Super Admin auth check failed:', error);
-        // If it's a 403, session exists but not super admin
-        // If it's a 401 or network error, redirect to login
+      } else {
         setIsAuthenticated(false);
       }
     };
