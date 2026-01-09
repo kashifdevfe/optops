@@ -1,8 +1,6 @@
 import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
-import { config } from '../src/config/env.js';
 import routes from '../src/routes/index.js';
 import { errorHandler } from '../src/middleware/error.middleware.js';
 
@@ -20,7 +18,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
   next();
@@ -49,12 +48,12 @@ app.use(
 app.use('/api', routes);
 
 // Health check
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // 404 handler
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
@@ -63,3 +62,4 @@ app.use(errorHandler);
 
 // Export for Vercel serverless
 export default app;
+
