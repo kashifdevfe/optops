@@ -12,7 +12,7 @@ export const adminService = {
     }
 
     const isValidPassword = await comparePassword(password, superAdmin.password);
-    
+
     if (!isValidPassword) {
       throw new Error('Invalid super admin credentials');
     }
