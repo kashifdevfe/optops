@@ -8,22 +8,12 @@ import { errorHandler } from '../src/middleware/error.middleware.js';
 
 const app = express();
 
-// Use standard CORS package with permissive config
+// Use standard CORS package with specific origin to match Vercel config
 app.use(cors({
-  origin: true, // Reflects the request origin
+  origin: 'https://optops-f7dh.vercel.app',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['X-CSRF-Token', 'X-Requested-With', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Content-Type', 'Date', 'X-Api-Version', 'Authorization'],
-  optionsSuccessStatus: 200
-}));
-
-// OPTIONS Handler for preflight
-app.options('*', cors({
-  origin: true,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['X-CSRF-Token', 'X-Requested-With', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Content-Type', 'Date', 'X-Api-Version', 'Authorization'],
-  optionsSuccessStatus: 200
 }));
 
 // Body parsing
