@@ -305,6 +305,9 @@ export const categoryApi = {
 export const adminApi = {
   login: async (data: { email: string; password: string }): Promise<{ email: string; isAdmin: boolean }> => {
     const response = await api.post('/admin/login', data);
+    if ((response.data as any).accessToken) {
+      localStorage.setItem('accessToken', (response.data as any).accessToken);
+    }
     return response.data;
   },
   logout: async (): Promise<void> => {
