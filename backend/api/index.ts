@@ -8,41 +8,44 @@ import { errorHandler } from '../src/middleware/error.middleware.js';
 
 const app = express();
 
-// Configure CORS
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.FRONTEND_ECOMMERCE_URL,
-  'http://localhost:5173',
-  'http://localhost:3001',
-  'https://optops-frontend.vercel.app', // Add potential production domains if known
-  'https://islamabad-optics-ecommerce.vercel.app'
-];
+// Manual CORS Middleware - Robust for Vercel/Serverless
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      return callback(null, true);
-    }
+  // Debug log to verify if this code is running in Vercel logs
+  console.log(`[CORS Request] Method: ${req.method}, Path: ${req.path}, Origin: ${origin}`);
 
-    // Check if the origin is allowed
-    // We can also allow all in production if we want to be permissive for now
-    // But it's safer to just reflect the origin if we want to support multiple
-    // correctly with credentials.
+  // Set the Origin header
+  // If specific origin exists, echo it back.
+  // We prioritize the incoming origin to support credentials.
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // Fallback for tools like Postman or S2S, but note: this conflicts with Credentials=true in browsers.
+    // However, browsers ALWAYS send Origin.
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
 
-    // For this specific case where we have dynamic vercel previews etc,
-    // we might want to just allow ANY origin that comes in,
-    // provided we trust it. 
-    // To be safe but flexible: allow any origin
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
-  exposedHeaders: ['Content-Length', 'Content-Type'],
-  preflightContinue: false,
-  optionsSuccessStatus: 204
-}));
+  // Allow credentials (cookies, sessions)
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  // Allow all standard methods
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, PATCH, DELETE, POST, PUT');
+
+  // Allow all headers that might be requested
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
+
+  // Handle preflight OPTIONS requests immediately
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
+  next();
+});
 
 // Body parsing
 app.use(express.json());
