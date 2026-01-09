@@ -8,44 +8,23 @@ import { errorHandler } from '../src/middleware/error.middleware.js';
 
 const app = express();
 
-// Manual CORS Middleware - Robust for Vercel/Serverless
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
+// Use standard CORS package with permissive config
+app.use(cors({
+  origin: true, // Reflects the request origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['X-CSRF-Token', 'X-Requested-With', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Content-Type', 'Date', 'X-Api-Version', 'Authorization'],
+  optionsSuccessStatus: 200
+}));
 
-  // Debug log to verify if this code is running in Vercel logs
-  console.log(`[CORS Request] Method: ${req.method}, Path: ${req.path}, Origin: ${origin}`);
-
-  // Set the Origin header
-  // If specific origin exists, echo it back.
-  // We prioritize the incoming origin to support credentials.
-  if (origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // Fallback for tools like Postman or S2S, but note: this conflicts with Credentials=true in browsers.
-    // However, browsers ALWAYS send Origin.
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  }
-
-  // Allow credentials (cookies, sessions)
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-
-  // Allow all standard methods
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, PATCH, DELETE, POST, PUT');
-
-  // Allow all headers that might be requested
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
-
-  // Handle preflight OPTIONS requests immediately
-  if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
-  }
-
-  next();
-});
+// OPTIONS Handler for preflight
+app.options('*', cors({
+  origin: true,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['X-CSRF-Token', 'X-Requested-With', 'Accept', 'Accept-Version', 'Content-Length', 'Content-MD5', 'Content-Type', 'Date', 'X-Api-Version', 'Authorization'],
+  optionsSuccessStatus: 200
+}));
 
 // Body parsing
 app.use(express.json());
