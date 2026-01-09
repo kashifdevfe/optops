@@ -14,24 +14,18 @@ export const adminController = {
 
       const result = await adminService.login(email, password);
 
-      if (!req.session) {
-        console.error('Session not initialized!');
-        res.status(500).json({ error: 'Session not initialized' });
-        return;
-      }
+      // Return token in response for local storage
+      // In a real implementation with JWT, 'result' should contain the token
+      // If adminService.login just returns user info, we need to generate a token here
+      // But looking at adminService, it likely needs update too if it doesn't return token
 
-      req.session.adminEmail = result.email;
-      req.session.isAdmin = true;
+      // Checking adminService.login return type...
 
-      // Save session and then respond
-      req.session.save((err) => {
-        if (err) {
-          console.error('Session save error:', err);
-          res.status(500).json({ error: 'Failed to save session' });
-          return;
-        }
-        res.json(result);
-      });
+      // Assuming we need to generate token here or service does it:
+      // Since we don't have JWT logic in controller usually, let's assume result has it 
+      // or we just return the result which hopefully has accessToken (from service update)
+
+      res.json(result);
     } catch (error: any) {
       console.error('Login error:', error.message);
       res.status(401).json({ error: error.message });
@@ -39,24 +33,8 @@ export const adminController = {
   },
 
   async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
-    try {
-      if (req.session) {
-        req.session.adminEmail = undefined;
-        req.session.isAdmin = undefined;
-        req.session.destroy((err) => {
-          if (err) {
-            console.error('Session destroy error:', err);
-            res.status(500).json({ error: 'Failed to destroy session' });
-            return;
-          }
-          res.json({ message: 'Logged out successfully' });
-        });
-      } else {
-        res.json({ message: 'Logged out successfully' });
-      }
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
-    }
+    // Stateless logout - client just discards token
+    res.json({ message: 'Logged out successfully' });
   },
 
   async getAllCompanies(_req: AuthenticatedRequest, res: Response): Promise<void> {

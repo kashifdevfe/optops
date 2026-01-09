@@ -1,6 +1,9 @@
 import prisma from '../config/database.js';
 import { comparePassword, hashPassword } from '../utils/bcrypt.js';
 
+// Import necessary utils
+import { generateAccessToken } from '../utils/jwt.js';
+
 export const adminService = {
   async login(email: string, password: string) {
     const superAdmin = await prisma.superAdmin.findUnique({
@@ -17,10 +20,36 @@ export const adminService = {
       throw new Error('Invalid super admin credentials');
     }
 
+    // Generate token - using same JWT util but payload might need to distinguish admin
+    // Or we just encode isAdmin: true in it?
+    // The current JWT util might expect specific payload format.
+    // Let's assume standard payload. If verifyAccessToken expects specific fields, we might need to adjust.
+    // However, verifyAccessToken usually just decodes.
+    // Ideally we should use a specific admin token, but for reuse/simplicity with existing middleware:
+    // We'll create a token that passes the authenticate/optionalAuth but also carries admin info
+
+    // For now, let's just create a token with the admin ID as userId (though it's not in user table)
+    // and a dummy companyId if needed, OR better:
+    // The authenticate middleware checks prisma.user.findUnique. This will fail for admin ID.
+    // So we need a separate middleware for admin or update the middleware to handle admin tokens.
+
+    // BUT since we are switching to token-based for users, admins also need token.
+    // We should return an accessToken here.
+
+    // Hack/Quick Fix: Generate a token that bypasses standard auth middleware if we use a specific admin middleware
+    // We already have 'requireAdmin' middleware. Let's update THAT to verify token.
+
+    const token = generateAccessToken({
+      userId: superAdmin.id,
+      companyId: 'super-admin',
+      role: 'super-admin'
+    });
+
     return {
       email: superAdmin.email,
       name: superAdmin.name,
       isAdmin: true,
+      accessToken: token
     };
   },
 

@@ -27,9 +27,14 @@ export const AdminLoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      await adminApi.login({ email, password });
-      // Wait a bit for session to be saved
-      await new Promise(resolve => setTimeout(resolve, 100));
+      const result = await adminApi.login({ email, password });
+
+      // Save token if returned (assuming result has accessToken as updated in backend service/controller)
+      // The adminApi.login return type might need update in frontend api.ts but `result` will have it at runtime
+      if ((result as any).accessToken) {
+        localStorage.setItem('accessToken', (result as any).accessToken);
+      }
+
       navigate('/admin/companies');
     } catch (err: any) {
       console.error('AdminLoginPage - Login error:', err);

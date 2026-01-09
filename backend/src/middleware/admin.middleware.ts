@@ -2,19 +2,29 @@ import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../types/index.js';
 import prisma from '../config/database.js';
 
-export const requireAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
-  const session = req.session;
-  
-  if (!session || !session.isAdmin || !session.adminEmail) {
-    res.status(403).json({ error: 'Super Admin access required' });
-    return;
-  }
+import { verifyAccessToken } from '../utils/jwt.js';
 
-  // Verify super admin exists and is active in database
+export const requireAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
+    const token = req.cookies?.accessToken || req.headers.authorization?.replace('Bearer ', '');
+
+    if (!token) {
+      res.status(401).json({ error: 'Authentication required' });
+      return;
+    }
+
+    const decoded = verifyAccessToken(token) as any; // Cast to any to access role if not in type
+
+    // Check if it's an admin token
+    if (decoded.role !== 'super-admin') {
+      res.status(403).json({ error: 'Super Admin access required' });
+      return;
+    }
+
+    // Verify super admin exists and is active in database
     const superAdmin = await prisma.superAdmin.findUnique({
-      where: { email: session.adminEmail },
-      select: { isActive: true },
+      where: { id: decoded.userId },
+      select: { id: true, email: true, isActive: true },
     });
 
     if (!superAdmin || !superAdmin.isActive) {
@@ -22,10 +32,15 @@ export const requireAdmin = async (req: AuthenticatedRequest, res: Response, nex
       return;
     }
 
+    // Attach admin info to request if needed, or just proceed
+    // req.user could be used but types might mismatch
+    // req.session = { ...req.session, isAdmin: true, adminEmail: superAdmin.email }; // Removed to fix TS error and we don't need session
+
+
     next();
   } catch (error) {
     console.error('Error checking super admin:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
 
