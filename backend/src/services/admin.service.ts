@@ -49,6 +49,7 @@ export const adminService = {
       email: superAdmin.email,
       name: superAdmin.name,
       isAdmin: true,
+      role: 'super-admin',
       accessToken: token
     };
   },
