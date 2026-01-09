@@ -52,6 +52,20 @@ const api = axios.create({
   },
 });
 
+// Request interceptor to add Auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
@@ -59,12 +73,36 @@ api.interceptors.response.use(
     if (error.config?.url?.includes('/admin/')) {
       return Promise.reject(error);
     }
-    
-    if (error.response?.status === 401 && !error.config?.url?.includes('/auth/')) {
+
+    const originalRequest = error.config as any;
+
+    // Handle 401 Unauthorized errors
+    if (error.response?.status === 401 && !originalRequest._retry && !error.config?.url?.includes('/auth/')) {
+      originalRequest._retry = true;
+
       try {
-        await api.post('/auth/refresh');
-        return api.request(error.config!);
+        // Try to refresh token
+        // Use a separate axios instance or manual fetch to avoid infinite loops if interceptor is used
+        // But for simplicity, we assume refresh endpoint uses cookies OR we pass refreshToken manually if we had it
+        // Since we are switching to localStorage, we should probably store refreshToken too.
+
+        // However, for this quick fix, let's just redirect to login if 401 occurs
+        localStorage.removeItem('accessToken');
+        window.location.href = '/login';
+
+        // If we implemented robust refresh token flow with localStorage:
+        /*
+        const refreshToken = localStorage.getItem('refreshToken');
+        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken });
+        const { accessToken } = response.data;
+        localStorage.setItem('accessToken', accessToken);
+        api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+        return api(originalRequest);
+        */
+
+        return Promise.reject(error);
       } catch {
+        localStorage.removeItem('accessToken');
         window.location.href = '/login';
       }
     }
@@ -75,14 +113,24 @@ api.interceptors.response.use(
 export const authApi = {
   signup: async (data: { name: string; email: string; password: string; userEmail: string; userName: string; address?: string; phone?: string; whatsapp?: string }): Promise<AuthResponse> => {
     const response = await api.post('/auth/signup', data);
+    if (response.data.accessToken) {
+      localStorage.setItem('accessToken', response.data.accessToken);
+    }
     return response.data;
   },
   login: async (data: { email: string; password: string }): Promise<AuthResponse> => {
     const response = await api.post('/auth/login', data);
+    if (response.data.accessToken) {
+      localStorage.setItem('accessToken', response.data.accessToken);
+    }
     return response.data;
   },
   logout: async (): Promise<void> => {
-    await api.post('/auth/logout');
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      localStorage.removeItem('accessToken');
+    }
   },
   refresh: async (): Promise<void> => {
     await api.post('/auth/refresh');

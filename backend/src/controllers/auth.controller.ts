@@ -11,6 +11,8 @@ export const authController = {
       res.cookie('refreshToken', result.refreshToken, config.cookie);
 
       res.status(201).json({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
         company: result.company,
         user: result.user,
         themeSettings: result.themeSettings,
@@ -29,6 +31,8 @@ export const authController = {
       res.cookie('refreshToken', result.refreshToken, config.cookie);
 
       res.json({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
         company: result.company,
         user: result.user,
         themeSettings: result.themeSettings,
@@ -52,7 +56,11 @@ export const authController = {
       res.cookie('accessToken', result.accessToken, config.cookie);
       res.cookie('refreshToken', result.refreshToken, config.cookie);
 
-      res.json({ success: true });
+      res.json({
+        success: true,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken
+      });
     } catch (error: any) {
       res.status(401).json({ error: error.message });
     }
