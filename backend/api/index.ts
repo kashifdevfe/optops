@@ -6,6 +6,9 @@ import { errorHandler } from '../src/middleware/error.middleware.js';
 
 const app = express();
 
+// Trust Vercel Proxy (Required for secure cookies)
+app.set('trust proxy', 1);
+
 // CORS Configuration - Allow ALL origins for now to debug
 app.use((req: Request, res: Response, next: NextFunction) => {
   // Set CORS headers manually for maximum compatibility
