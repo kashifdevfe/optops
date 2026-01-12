@@ -88,6 +88,7 @@ export const authService = {
         address: company.address,
         phone: company.phone,
         whatsapp: company.whatsapp,
+        ecommerceEnabled: company.ecommerceEnabled,
       },
       user: {
         id: user.id,
@@ -159,6 +160,7 @@ export const authService = {
         address: company.address,
         phone: company.phone,
         whatsapp: company.whatsapp,
+        ecommerceEnabled: company.ecommerceEnabled,
       },
       user: {
         id: user.id,
