@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../src/config/database.js';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
 
 async function main() {
   // Create super admin if it doesn't exist
@@ -25,7 +23,7 @@ async function main() {
   }
 
   const company = await prisma.company.findFirst();
-  
+
   if (!company) {
     console.log('No company found. Please create a company first.');
     return;

@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../src/config/database.js';
 import bcrypt from 'bcrypt';
-
-const prisma = new PrismaClient();
 
 async function createSuperAdmin() {
     const email = 'kashif.devfe@gmail.com';
