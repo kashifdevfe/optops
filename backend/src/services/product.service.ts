@@ -15,7 +15,7 @@ export const productService = {
         where: { ecommerceEnabled: true },
         select: { id: true },
       });
-      const companyIds = companiesWithEcommerce.map((c) => c.id);
+      const companyIds = companiesWithEcommerce.map((c: any) => c.id);
       if (companyIds.length > 0) {
         where.companyId = { in: companyIds };
       } else {
@@ -49,8 +49,8 @@ export const productService = {
     if (filters?.featured !== undefined) {
       // Convert string to boolean if needed
       const featuredValue = filters.featured;
-      where.featured = typeof featuredValue === 'boolean' 
-        ? featuredValue 
+      where.featured = typeof featuredValue === 'boolean'
+        ? featuredValue
         : featuredValue === 'true' || featuredValue === '1';
     }
 

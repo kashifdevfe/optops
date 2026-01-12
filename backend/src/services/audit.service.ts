@@ -26,7 +26,7 @@ async function calculateAuditFinancials(
   });
 
   // Create maps for quick lookup
-  const inventoryItemMap = new Map(allInventoryItems.map(item => [item.name, item]));
+  const inventoryItemMap = new Map<string, any>(allInventoryItems.map((item: any) => [item.name, item]));
 
   // Calculate category-wise breakdown
   const categoryBreakdown: Record<string, {
@@ -48,48 +48,48 @@ async function calculateAuditFinancials(
   let grossSales = 0;
   let costOfGoodsSold = 0;
 
-    // Process each sale to calculate category-wise metrics
-    for (const sale of sales) {
-      grossSales += sale.total;
+  // Process each sale to calculate category-wise metrics
+  for (const sale of sales) {
+    grossSales += sale.total;
 
-      // Get frame and lens for this sale
-      const frame = sale.frame ? inventoryItemMap.get(sale.frame) : null;
-      const lens = sale.lens ? inventoryItemMap.get(sale.lens) : null;
+    // Get frame and lens for this sale
+    const frame = sale.frame ? inventoryItemMap.get(sale.frame) : null;
+    const lens = sale.lens ? inventoryItemMap.get(sale.lens) : null;
 
-      // Calculate total cost for this sale
-      const frameCost = frame ? frame.unitPrice : 0;
-      const lensCost = lens ? lens.unitPrice : 0;
-      const totalCost = frameCost + lensCost;
-      costOfGoodsSold += totalCost;
+    // Calculate total cost for this sale
+    const frameCost = frame ? frame.unitPrice : 0;
+    const lensCost = lens ? lens.unitPrice : 0;
+    const totalCost = frameCost + lensCost;
+    costOfGoodsSold += totalCost;
 
-      // Calculate revenue: split sale.total proportionally by cost
-      let frameRevenue = 0;
-      let lensRevenue = 0;
+    // Calculate revenue: split sale.total proportionally by cost
+    let frameRevenue = 0;
+    let lensRevenue = 0;
 
-      if (frame && lens) {
-        // Both frame and lens: split proportionally by cost
-        const totalCostForSplit = frameCost + lensCost;
-        if (totalCostForSplit > 0) {
-          frameRevenue = (frameCost / totalCostForSplit) * sale.total;
-          lensRevenue = (lensCost / totalCostForSplit) * sale.total;
-        } else {
-          // If both costs are 0, split equally
-          frameRevenue = sale.total / 2;
-          lensRevenue = sale.total / 2;
-        }
-      } else if (frame) {
-        // Only frame: gets full sale total
-        frameRevenue = sale.total;
-      } else if (lens) {
-        // Only lens: gets full sale total
-        lensRevenue = sale.total;
+    if (frame && lens) {
+      // Both frame and lens: split proportionally by cost
+      const totalCostForSplit = frameCost + lensCost;
+      if (totalCostForSplit > 0) {
+        frameRevenue = (frameCost / totalCostForSplit) * sale.total;
+        lensRevenue = (lensCost / totalCostForSplit) * sale.total;
+      } else {
+        // If both costs are 0, split equally
+        frameRevenue = sale.total / 2;
+        lensRevenue = sale.total / 2;
       }
+    } else if (frame) {
+      // Only frame: gets full sale total
+      frameRevenue = sale.total;
+    } else if (lens) {
+      // Only lens: gets full sale total
+      lensRevenue = sale.total;
+    }
 
     // Process frame
     if (frame) {
       const categoryId = frame.categoryId;
       const categoryName = frame.category?.name || 'Uncategorized';
-      
+
       if (!categoryBreakdown[categoryId]) {
         categoryBreakdown[categoryId] = {
           categoryName,
@@ -131,7 +131,7 @@ async function calculateAuditFinancials(
     if (lens) {
       const categoryId = lens.categoryId;
       const categoryName = lens.category?.name || 'Uncategorized';
-      
+
       if (!categoryBreakdown[categoryId]) {
         categoryBreakdown[categoryId] = {
           categoryName,
@@ -186,7 +186,7 @@ async function calculateAuditFinancials(
         },
       },
     });
-    const totalBills = bills.reduce((sum, bill) => sum + bill.amount, 0);
+    const totalBills = bills.reduce((sum: number, bill: any) => sum + bill.amount, 0);
 
     // Get salaries for the period
     const salaries = await prisma.salary.findMany({
@@ -198,7 +198,7 @@ async function calculateAuditFinancials(
         },
       },
     });
-    const totalSalaries = salaries.reduce((sum, salary) => sum + salary.amount, 0);
+    const totalSalaries = salaries.reduce((sum: number, salary: any) => sum + salary.amount, 0);
 
     totalExpenses = totalBills + totalSalaries;
   }
@@ -277,29 +277,29 @@ export const auditService = {
       where: salesWhere,
     });
 
-    const totalSalesValue = sales.reduce((sum, sale) => sum + sale.total, 0);
+    const totalSalesValue = sales.reduce((sum: number, sale: any) => sum + sale.total, 0);
 
     // Calculate financial summary from audits
-    const totalGrossSales = audits.reduce((sum, audit) => sum + (audit.grossSales || 0), 0);
-    const totalCOGS = audits.reduce((sum, audit) => sum + (audit.costOfGoodsSold || 0), 0);
-    const totalNetProfit = audits.reduce((sum, audit) => sum + (audit.netProfit || 0), 0);
-    const avgProfitMargin = audits.length > 0 
-      ? audits.reduce((sum, audit) => sum + (audit.profitMargin || 0), 0) / audits.length 
+    const totalGrossSales = audits.reduce((sum: number, audit: any) => sum + (audit.grossSales || 0), 0);
+    const totalCOGS = audits.reduce((sum: number, audit: any) => sum + (audit.costOfGoodsSold || 0), 0);
+    const totalNetProfit = audits.reduce((sum: number, audit: any) => sum + (audit.netProfit || 0), 0);
+    const avgProfitMargin = audits.length > 0
+      ? audits.reduce((sum: number, audit: any) => sum + (audit.profitMargin || 0), 0) / audits.length
       : 0;
 
     // Calculate summary
     const summary = {
       totalAudits: audits.length,
-      totalInventoryValue: audits.reduce((sum, audit) => sum + audit.totalInventoryValue, 0),
+      totalInventoryValue: audits.reduce((sum: number, audit: any) => sum + audit.totalInventoryValue, 0),
       totalSalesValue,
       totalGrossSales,
       totalCOGS,
       totalNetProfit,
       avgProfitMargin,
       totalDiscrepancies: audits.reduce(
-        (sum, audit) =>
+        (sum: number, audit: any) =>
           sum +
-          audit.items.reduce((itemSum, item) => itemSum + Math.abs(item.discrepancy) * item.unitPrice, 0),
+          audit.items.reduce((itemSum: number, item: any) => itemSum + Math.abs(item.discrepancy) * item.unitPrice, 0),
         0
       ),
     };
@@ -486,7 +486,7 @@ export const auditService = {
 
       // Create new items
       await prisma.auditItem.createMany({
-        data: auditItems.map((item) => ({
+        data: auditItems.map((item: any) => ({
           ...item,
           auditId,
         })),
@@ -498,7 +498,7 @@ export const auditService = {
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
       const financials = await calculateAuditFinancials(companyId, startDate, endDate, includeExpenses);
-      
+
       updateData.totalSalesValue = financials.grossSales;
       updateData.grossSales = financials.grossSales;
       updateData.costOfGoodsSold = financials.costOfGoodsSold;

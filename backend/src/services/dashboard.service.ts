@@ -33,7 +33,7 @@ export const dashboardService = {
       },
     });
 
-    const monthlyData = monthlySales.reduce((acc, sale) => {
+    const monthlyData = monthlySales.reduce((acc: any, sale: any) => {
       const month = new Date(sale.createdAt).toLocaleDateString('en-US', { month: 'short' });
       if (!acc[month]) {
         acc[month] = 0;
@@ -74,13 +74,13 @@ export const dashboardService = {
       },
     });
 
-    const itemCategoryMap = new Map(
-      inventoryItemsList.map(item => [item.name, item.category?.name || 'Uncategorized'])
+    const itemCategoryMap = new Map<string, string>(
+      inventoryItemsList.map((item: any) => [item.name, item.category?.name || 'Uncategorized'])
     );
 
     // Calculate sales by category
     const salesByCategory: Record<string, number> = {};
-    salesWithDetails.forEach(sale => {
+    salesWithDetails.forEach((sale: any) => {
       if (sale.frame && itemCategoryMap.has(sale.frame)) {
         const category = itemCategoryMap.get(sale.frame)!;
         salesByCategory[category] = (salesByCategory[category] || 0) + sale.total;
@@ -93,7 +93,7 @@ export const dashboardService = {
 
     // Calculate top selling items
     const itemSales: Record<string, number> = {};
-    salesWithDetails.forEach(sale => {
+    salesWithDetails.forEach((sale: any) => {
       if (sale.frame) {
         itemSales[sale.frame] = (itemSales[sale.frame] || 0) + 1;
       }
@@ -109,7 +109,7 @@ export const dashboardService = {
 
     // Calculate sales by status
     const salesByStatus: Record<string, number> = {};
-    salesWithDetails.forEach(sale => {
+    salesWithDetails.forEach((sale: any) => {
       salesByStatus[sale.status] = (salesByStatus[sale.status] || 0) + 1;
     });
 
@@ -126,17 +126,17 @@ export const dashboardService = {
 
       const weekLabel = `Week ${i === 0 ? 'Current' : i}`;
       weeklySales[weekLabel] = salesWithDetails
-        .filter(sale => {
+        .filter((sale: any) => {
           const saleDate = new Date(sale.createdAt);
           return saleDate >= weekStart && saleDate <= weekEnd;
         })
-        .reduce((sum, sale) => sum + sale.total, 0);
+        .reduce((sum: number, sale: any) => sum + sale.total, 0);
     }
 
     // Calculate revenue and profit (last 6 months)
     const monthlyRevenue: Record<string, number> = {};
     const monthlyProfit: Record<string, number> = {};
-    
+
     const last6Months = [];
     for (let i = 5; i >= 0; i--) {
       const date = new Date();
@@ -147,7 +147,7 @@ export const dashboardService = {
       monthlyProfit[monthKey] = 0;
     }
 
-    salesWithDetails.forEach(sale => {
+    salesWithDetails.forEach((sale: any) => {
       const saleDate = new Date(sale.createdAt);
       const monthKey = saleDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
       if (monthlyRevenue[monthKey] !== undefined) {
@@ -159,9 +159,9 @@ export const dashboardService = {
 
     // Calculate inventory value by category
     const inventoryByCategory: Record<string, number> = {};
-    inventoryItemsList.forEach(item => {
+    inventoryItemsList.forEach((item: any) => {
       const category = item.category?.name || 'Uncategorized';
-      inventoryByCategory[category] = (inventoryByCategory[category] || 0) + 
+      inventoryByCategory[category] = (inventoryByCategory[category] || 0) +
         (item.unitPrice * item.totalStock);
     });
 

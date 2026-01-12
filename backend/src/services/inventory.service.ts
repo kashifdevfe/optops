@@ -139,7 +139,7 @@ export const inventoryService = {
       },
     });
 
-    return items.reduce((total, item) => {
+    return items.reduce((total: number, item: any) => {
       return total + (item.totalStock * item.unitPrice);
     }, 0);
   },
@@ -154,8 +154,8 @@ export const inventoryService = {
     });
 
     const totalItems = items.length;
-    const totalStock = items.reduce((sum, item) => sum + item.totalStock, 0);
-    const totalValue = items.reduce((sum, item) => sum + (item.totalStock * item.unitPrice), 0);
+    const totalStock = items.reduce((sum: number, item: any) => sum + item.totalStock, 0);
+    const totalValue = items.reduce((sum: number, item: any) => sum + (item.totalStock * item.unitPrice), 0);
 
     return {
       totalItems,

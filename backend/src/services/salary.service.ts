@@ -311,18 +311,18 @@ export const salaryService = {
   async getSalarySummary(companyId: string) {
     const employees = await prisma.employee.count({ where: { companyId, isActive: true } });
     const salaries = await prisma.salary.findMany({ where: { companyId } });
-    
+
     const totalPaid = salaries
-      .filter(s => s.status === 'paid')
-      .reduce((sum, s) => sum + s.amount, 0);
-    
+      .filter((s: any) => s.status === 'paid')
+      .reduce((sum: number, s: any) => sum + s.amount, 0);
+
     const totalPending = salaries
-      .filter(s => s.status === 'pending')
-      .reduce((sum, s) => sum + s.amount, 0);
-    
+      .filter((s: any) => s.status === 'pending')
+      .reduce((sum: number, s: any) => sum + s.amount, 0);
+
     const totalOverdue = salaries
-      .filter(s => s.status === 'overdue')
-      .reduce((sum, s) => sum + s.amount, 0);
+      .filter((s: any) => s.status === 'overdue')
+      .reduce((sum: number, s: any) => sum + s.amount, 0);
 
     return {
       totalEmployees: employees,
@@ -335,18 +335,18 @@ export const salaryService = {
 
   async getBillSummary(companyId: string) {
     const bills = await prisma.bill.findMany({ where: { companyId } });
-    
+
     const totalOutstanding = bills
-      .filter(b => b.status === 'outstanding')
-      .reduce((sum, b) => sum + b.amount, 0);
-    
+      .filter((b: any) => b.status === 'outstanding')
+      .reduce((sum: number, b: any) => sum + b.amount, 0);
+
     const totalPaid = bills
-      .filter(b => b.status === 'paid')
-      .reduce((sum, b) => sum + b.amount, 0);
-    
+      .filter((b: any) => b.status === 'paid')
+      .reduce((sum: number, b: any) => sum + b.amount, 0);
+
     const totalOverdue = bills
-      .filter(b => b.status === 'overdue')
-      .reduce((sum, b) => sum + b.amount, 0);
+      .filter((b: any) => b.status === 'overdue')
+      .reduce((sum: number, b: any) => sum + b.amount, 0);
 
     return {
       totalBills: bills.length,
