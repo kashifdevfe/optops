@@ -14,7 +14,9 @@ export const apiLoading = {
   subscribe(listener: Listener) {
     listeners.add(listener);
     listener(pendingCount);
-    return () => listeners.delete(listener);
+    return () => {
+      listeners.delete(listener);
+    };
   },
   inc() {
     pendingCount += 1;
