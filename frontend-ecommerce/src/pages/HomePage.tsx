@@ -10,54 +10,62 @@ import {
   CardActions,
   Button,
   Chip,
+  CircularProgress,
 } from '@mui/material';
-import { productApi } from '../services/api';
-import { Product } from '../types';
+import { productApi, bannerApi } from '../services/api';
+import { Product, Banner } from '../types';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
 import logoImage from '../assets/isbopt.png';
+import { HeroBanner } from '../components/HeroBanner'; // Assuming this import path
 
 export const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [bannersLoading, setBannersLoading] = useState(true);
   const { addToCart } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const loadFeatured = async () => {
+    const loadData = async () => {
       try {
-        const products = await productApi.getProducts({ featured: true });
+        const [products, fetchedBanners] = await Promise.all([
+          productApi.getProducts({ featured: true }),
+          bannerApi.getBanners(),
+        ]);
         setFeaturedProducts(products.slice(0, 6));
+        setBanners(fetchedBanners || []);
       } catch (error) {
-        console.error('Failed to load featured products:', error);
+        console.error('Failed to load data:', error);
       } finally {
         setLoading(false);
+        setBannersLoading(false);
       }
     };
-    loadFeatured();
+    loadData();
   }, []);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product, 1);
   };
 
-  return (
-    <Box sx={{ backgroundColor: '#FFFFFF', position: 'relative' }}>
-      {/* Subtle background pattern */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0)',
-          backgroundSize: '24px 24px',
-          pointerEvents: 'none',
-          opacity: 0.4,
-          zIndex: 0,
-        }}
-      />
+  const renderHero = () => {
+    if (bannersLoading) {
+      return (
+        <Box sx={{ height: { xs: '60vh', md: '80vh' }, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Box>
+      );
+    }
+
+    if (banners.length > 0) {
+      // Pass banners to HeroBanner to avoid re-fetching
+      return <HeroBanner banners={banners} />;
+    }
+
+    // Default Hero
+    return (
       <Box
         sx={{
           position: 'relative',
@@ -81,7 +89,7 @@ export const HomePage = () => {
               mb: 4,
               mx: 'auto',
               display: 'block',
-              filter: 'drop-shadow(0 4px 20px rgba(212, 175, 55, 0.3))',
+              filter: 'drop-shadow(0 4px 20px rgba(212, 175, 55, 0.3)',
             }}
           />
           <Typography
@@ -121,6 +129,28 @@ export const HomePage = () => {
           </Button>
         </Container>
       </Box>
+    );
+  };
+
+  return (
+    <Box sx={{ backgroundColor: '#FFFFFF', position: 'relative' }}>
+      {/* Subtle background pattern */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage: 'radial-gradient(circle at 1px 1px, rgba(0,0,0,0.02) 1px, transparent 0)',
+          backgroundSize: '24px 24px',
+          pointerEvents: 'none',
+          opacity: 0.4,
+          zIndex: 0,
+        }}
+      />
+
+      {renderHero()}
 
       <Container maxWidth="xl" sx={{ py: { xs: 6, md: 12 }, position: 'relative', zIndex: 1 }}>
         <Box sx={{ textAlign: 'center', mb: 8 }}>
@@ -159,12 +189,12 @@ export const HomePage = () => {
               // Parse images similar to ProductsPage
               const parseImage = (images: string): string => {
                 if (!images || !images.trim()) return '/placeholder.jpg';
-                
+
                 // If already a data URL or http URL, return as is
                 if (images.startsWith('data:') || images.startsWith('http')) {
                   return images;
                 }
-                
+
                 try {
                   // Try to parse as JSON
                   const parsed = JSON.parse(images);
@@ -174,9 +204,9 @@ export const HomePage = () => {
                   } else {
                     imageUrl = parsed;
                   }
-                  
+
                   if (!imageUrl) return '/placeholder.jpg';
-                  
+
                   // If it's a base64 string without prefix, add it
                   if (!imageUrl.startsWith('data:') && !imageUrl.startsWith('http')) {
                     const trimmed = imageUrl.trim();
@@ -199,7 +229,7 @@ export const HomePage = () => {
                     }
                     return firstImage;
                   }
-                  
+
                   // Single base64 string
                   const trimmed = images.trim();
                   if (trimmed.startsWith('data:') || trimmed.startsWith('http')) {
@@ -211,7 +241,7 @@ export const HomePage = () => {
                   return trimmed || '/placeholder.jpg';
                 }
               };
-              
+
               const imageUrl = parseImage(product.images);
               return (
                 <Grid item xs={12} sm={6} md={4} key={product.id}>

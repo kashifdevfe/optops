@@ -14,6 +14,18 @@ export interface Product {
   featured: boolean;
   createdAt: string;
   updatedAt: string;
+  discount?: number;
+  discountPercent?: number;
+}
+
+export interface Banner {
+  id: string;
+  title: string;
+  subtitle?: string;
+  imageUrl: string;
+  linkUrl?: string;
+  isActive: boolean;
+  sortOrder: number;
 }
 
 export interface CartItem {

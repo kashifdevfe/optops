@@ -18,6 +18,7 @@ import {
   Button,
   Grid,
   Alert,
+  Tooltip,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { ecommerceApi, EcommerceOrder } from '../../services/api.js';
@@ -70,7 +71,7 @@ export const EcommerceOrdersPage: React.FC = () => {
   const handleDelivered = (order: EcommerceOrder) => {
     // Format phone number (remove any non-numeric characters except +)
     let phoneNumber = order.customerPhone.replace(/[^\d+]/g, '');
-    
+
     // If phone doesn't start with +, assume it's a local number and add country code
     // You may need to adjust this based on your country code (92 for Pakistan)
     if (!phoneNumber.startsWith('+')) {
@@ -90,7 +91,7 @@ export const EcommerceOrdersPage: React.FC = () => {
 
     // Encode message for URL
     const encodedMessage = encodeURIComponent(message);
-    
+
     // Open WhatsApp with pre-filled message
     const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
     window.open(whatsappUrl, '_blank');
@@ -144,7 +145,11 @@ export const EcommerceOrdersPage: React.FC = () => {
             ) : (
               orders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell>{order.orderNumber}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                      {order.orderNumber}
+                    </Typography>
+                  </TableCell>
                   <TableCell>{order.customerName}</TableCell>
                   <TableCell>{order.customerPhone}</TableCell>
                   <TableCell>Rs {order.totalAmount.toFixed(2)}</TableCell>
@@ -157,9 +162,9 @@ export const EcommerceOrdersPage: React.FC = () => {
                   </TableCell>
                   <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleViewDetails(order.id)} 
+                    <IconButton
+                      size="small"
+                      onClick={() => handleViewDetails(order.id)}
                       color="primary"
                       sx={{ mr: 1 }}
                       title="View Details"

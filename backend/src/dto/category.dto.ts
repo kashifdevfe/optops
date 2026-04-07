@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
-// Helper to transform empty string to undefined
+// Helper to transform empty string to undefined (so UI can send "" to mean "None")
 const typeSchema = z.preprocess(
   (val) => (val === '' ? undefined : val),
-  z.enum(['Frame', 'Lens']).optional()
+  z.string().min(1).optional()
 );
 
 export const createCategorySchema = z.object({

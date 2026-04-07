@@ -33,6 +33,7 @@ model Company {
   employees      Employee[]
   salaries       Salary[]
   bills          Bill[]
+  banners        Banner[]
 
   @@map("companies")
 }
@@ -107,6 +108,7 @@ model Sale {
   leftEyeCylinder  String    @default("0")
   leftEyeAxis      String    @default("0")
   nearAdd          String    @default("0")
+  customEntry      String?   // Custom entry / notes for the sale
   total            Float
   received         Float     @default(0)
   remaining        Float     @default(0)
@@ -235,6 +237,8 @@ model EcommerceProduct {
   inStock     Boolean  @default(true)
   stockCount  Int      @default(0)
   featured    Boolean  @default(false)
+  discount        Float    @default(0)  // Discount amount
+  discountPercent Float    @default(0)  // Discount percentage (0-100)
   companyId   String
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -348,4 +352,20 @@ model SuperAdmin {
   updatedAt DateTime @updatedAt
 
   @@map("super_admins")
+}
+
+model Banner {
+  id          String   @id @default(cuid())
+  title       String
+  subtitle    String?
+  imageUrl    String   // base64 or URL
+  linkUrl     String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  companyId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("banners")
 }

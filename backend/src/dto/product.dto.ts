@@ -24,6 +24,8 @@ export const createProductSchema = z.object({
   inStock: z.boolean().default(true),
   stockCount: z.number().int().min(0).default(0),
   featured: z.boolean().default(false),
+  discount: z.number().min(0).default(0),
+  discountPercent: z.number().min(0).max(100).default(0),
 });
 
 export const updateProductSchema = createProductSchema.partial();

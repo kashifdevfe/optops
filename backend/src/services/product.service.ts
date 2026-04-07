@@ -95,6 +95,8 @@ export const productService = {
         inStock: data.inStock !== undefined ? data.inStock : true,
         stockCount: data.stockCount || 0,
         featured: data.featured || false,
+        discount: data.discount || 0,
+        discountPercent: data.discountPercent || 0,
         companyId,
       },
     });
@@ -128,10 +130,20 @@ export const productService = {
         id: productId,
         companyId,
       },
+      include: {
+        orderItems: true,
+      },
     });
 
     if (!product) {
       throw new Error('Product not found');
+    }
+
+    // Delete associated order items first to avoid FK constraint errors
+    if (product.orderItems.length > 0) {
+      await prisma.ecommerceOrderItem.deleteMany({
+        where: { productId },
+      });
     }
 
     await prisma.ecommerceProduct.delete({

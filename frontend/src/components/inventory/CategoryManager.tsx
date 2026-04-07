@@ -39,7 +39,9 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose,
   const [loading, setLoading] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [formData, setFormData] = useState<{ name: string; type?: 'Frame' | 'Lens' }>({ name: '', type: undefined });
+  const [formData, setFormData] = useState<{ name: string; type?: string }>({ name: '', type: undefined });
+  const [typeMode, setTypeMode] = useState<'none' | 'frame' | 'lens' | 'custom'>('none');
+  const [customType, setCustomType] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
@@ -64,10 +66,26 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose,
   const handleOpen = (category?: Category) => {
     if (category) {
       setEditingCategory(category);
-      setFormData({ name: category.name, type: category.type || undefined });
+      const existingType = category.type || undefined;
+      setFormData({ name: category.name, type: existingType });
+      if (!existingType) {
+        setTypeMode('none');
+        setCustomType('');
+      } else if (existingType === 'Frame') {
+        setTypeMode('frame');
+        setCustomType('');
+      } else if (existingType === 'Lens') {
+        setTypeMode('lens');
+        setCustomType('');
+      } else {
+        setTypeMode('custom');
+        setCustomType(existingType);
+      }
     } else {
       setEditingCategory(null);
       setFormData({ name: '', type: undefined });
+      setTypeMode('none');
+      setCustomType('');
     }
     setDialogOpen(true);
     setError(null);
@@ -78,6 +96,8 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose,
     setDialogOpen(false);
     setEditingCategory(null);
     setFormData({ name: '', type: undefined });
+    setTypeMode('none');
+    setCustomType('');
     setError(null);
     setSuccess(false);
   };
@@ -197,18 +217,50 @@ export const CategoryManager: React.FC<CategoryManagerProps> = ({ open, onClose,
               <FormControl fullWidth>
                 <InputLabel>Type (for Sales)</InputLabel>
                 <Select
-                  value={formData.type || ''}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, type: e.target.value as 'Frame' | 'Lens' | undefined }))}
+                  value={typeMode}
+                  onChange={(e) => {
+                    const mode = e.target.value as 'none' | 'frame' | 'lens' | 'custom';
+                    setTypeMode(mode);
+                    if (mode === 'none') {
+                      setCustomType('');
+                      setFormData((prev) => ({ ...prev, type: undefined }));
+                    } else if (mode === 'frame') {
+                      setCustomType('');
+                      setFormData((prev) => ({ ...prev, type: 'Frame' }));
+                    } else if (mode === 'lens') {
+                      setCustomType('');
+                      setFormData((prev) => ({ ...prev, type: 'Lens' }));
+                    } else {
+                      // custom
+                      setFormData((prev) => ({ ...prev, type: customType.trim() || undefined }));
+                    }
+                  }}
                   label="Type (for Sales)"
                 >
-                  <MenuItem value="">
+                  <MenuItem value="none">
                     <em>None</em>
                   </MenuItem>
-                  <MenuItem value="Frame">Frame</MenuItem>
-                  <MenuItem value="Lens">Lens</MenuItem>
+                  <MenuItem value="frame">Frame</MenuItem>
+                  <MenuItem value="lens">Lens</MenuItem>
+                  <MenuItem value="custom">Custom</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
+            {typeMode === 'custom' && (
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Custom Type"
+                  value={customType}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setCustomType(val);
+                    setFormData((prev) => ({ ...prev, type: val.trim() || undefined }));
+                  }}
+                  placeholder="e.g. Accessories, Solution, Service..."
+                />
+              </Grid>
+            )}
           </Grid>
         </DialogContent>
         <DialogActions>

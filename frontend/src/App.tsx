@@ -24,11 +24,13 @@ import { AuditsPage } from './pages/private/AuditsPage.js';
 import { SalaryPage } from './pages/private/SalaryPage.js';
 import { EcommerceProductsPage } from './pages/private/EcommerceProductsPage.js';
 import { EcommerceOrdersPage } from './pages/private/EcommerceOrdersPage.js';
+import { BannersPage } from './pages/private/BannersPage.js';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage.js';
 import { AdminCompaniesPage } from './pages/admin/AdminCompaniesPage.js';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage.js';
 import { AdminLayout } from './components/layouts/AdminLayout.js';
 import { AdminProtectedRoute } from './components/common/AdminProtectedRoute.js';
+import { GlobalApiLoader } from './components/common/GlobalApiLoader.js';
 
 const AppRoutes: React.FC = () => {
   const { themeSettings, isAuthenticated } = useAppSelector((state) => state.auth);
@@ -37,6 +39,7 @@ const AppRoutes: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <GlobalApiLoader />
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
         <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
@@ -60,6 +63,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/ecommerce" element={<Navigate to="/ecommerce/products" replace />} />
           <Route path="/ecommerce/products" element={<EcommerceProductsPage />} />
           <Route path="/ecommerce/orders" element={<EcommerceOrdersPage />} />
+          <Route path="/ecommerce/banners" element={<BannersPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/company" element={<CompanySettingsPage />} />
           <Route path="/theme" element={<ThemeSettingsPage />} />

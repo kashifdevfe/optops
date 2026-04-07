@@ -61,7 +61,7 @@ export const orderService = {
         where: { id: data.items[0].productId },
         select: { companyId: true },
       });
-      
+
       if (firstProduct) {
         determinedCompanyId = firstProduct.companyId;
       }
@@ -87,11 +87,14 @@ export const orderService = {
         throw new Error(`Insufficient stock for product ${product.name}`);
       }
 
-      totalAmount += product.price * item.quantity;
+      // Calculate price after discount
+      const finalPrice = Math.max(0, product.price - (product.discount || 0));
+
+      totalAmount += finalPrice * item.quantity;
       orderItems.push({
         productId: item.productId,
         quantity: item.quantity,
-        price: product.price,
+        price: finalPrice,
       });
     }
 
@@ -137,7 +140,7 @@ export const orderService = {
           },
         },
       });
-      
+
       // Update inStock based on remaining stock
       if (updatedProduct.stockCount <= 0) {
         await prisma.ecommerceProduct.update({

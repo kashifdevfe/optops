@@ -34,7 +34,7 @@ export const productApi = {
     if (filters?.minPrice) params.append('minPrice', filters.minPrice.toString());
     if (filters?.maxPrice) params.append('maxPrice', filters.maxPrice.toString());
     if (filters?.featured !== undefined) params.append('featured', filters.featured.toString());
-    
+
     const response = await api.get(`/products?${params.toString()}`);
     return response.data;
   },
@@ -48,6 +48,13 @@ export const productApi = {
 export const orderApi = {
   createOrder: async (data: any) => {
     const response = await api.post('/orders', data);
+    return response.data;
+  },
+};
+
+export const bannerApi = {
+  getBanners: async () => {
+    const response = await api.get('/banners/public');
     return response.data;
   },
 };

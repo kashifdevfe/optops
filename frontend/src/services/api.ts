@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { API_URL } from '../config/api.js';
+import { apiLoading } from './apiLoading.js';
 import type {
   AuthResponse,
   Company,
@@ -55,6 +56,7 @@ const api = axios.create({
 // Request interceptor to add Auth token
 api.interceptors.request.use(
   (config) => {
+    apiLoading.inc();
     const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -62,13 +64,18 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    apiLoading.dec();
     return Promise.reject(error);
   }
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    apiLoading.dec();
+    return response;
+  },
   async (error: AxiosError) => {
+    apiLoading.dec();
     // Don't intercept admin routes
     if (error.config?.url?.includes('/admin/')) {
       return Promise.reject(error);
@@ -449,6 +456,8 @@ export interface EcommerceProduct {
   inStock: boolean;
   stockCount: number;
   featured: boolean;
+  discount: number;
+  discountPercent: number;
   companyId: string;
   createdAt: string;
   updatedAt: string;
@@ -500,6 +509,8 @@ export interface CreateEcommerceProductDto {
   inStock?: boolean;
   stockCount?: number;
   featured?: boolean;
+  discount?: number;
+  discountPercent?: number;
 }
 
 export interface CreateEcommerceOrderDto {
@@ -573,5 +584,29 @@ export const ecommerceApi = {
   updateOrderStatus: async (id: string, status: string): Promise<EcommerceOrder> => {
     const response = await api.patch(`/ecommerce/orders/${id}/status`, { status });
     return response.data;
+  },
+};
+
+import type { Banner, CreateBannerDto, UpdateBannerDto } from '../types/index.js';
+
+export const bannerApi = {
+  getBanners: async (): Promise<Banner[]> => {
+    const response = await api.get('/banners');
+    return response.data;
+  },
+  getPublicBanners: async (): Promise<Banner[]> => {
+    const response = await api.get('/banners/public');
+    return response.data;
+  },
+  createBanner: async (data: CreateBannerDto): Promise<Banner> => {
+    const response = await api.post('/banners', data);
+    return response.data;
+  },
+  updateBanner: async (id: string, data: UpdateBannerDto): Promise<Banner> => {
+    const response = await api.patch(`/banners/${id}`, data);
+    return response.data;
+  },
+  deleteBanner: async (id: string): Promise<void> => {
+    await api.delete(`/banners/${id}`);
   },
 };

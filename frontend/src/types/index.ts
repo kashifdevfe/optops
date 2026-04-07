@@ -100,6 +100,7 @@ export interface Sale {
   leftEyeCylinder: string;
   leftEyeAxis: string;
   nearAdd: string;
+  customEntry?: string | null;
   total: number;
   received: number;
   remaining: number;
@@ -116,7 +117,7 @@ export interface Sale {
 export interface Category {
   id: string;
   name: string;
-  type?: 'Frame' | 'Lens' | null;
+  type?: string | null;
   companyId: string;
   createdAt: string;
   updatedAt: string;
@@ -174,10 +175,11 @@ export interface CreateSaleDto {
   leftEyeCylinder?: string;
   leftEyeAxis?: string;
   nearAdd?: string;
+  customEntry?: string;
   total: number;
   received?: number;
-  frame: string;
-  lens: string;
+  frame?: string;
+  lens?: string;
   entryDate?: string;
   deliveryDate?: string;
   status?: string;
@@ -193,6 +195,7 @@ export interface UpdateSaleDto {
   leftEyeCylinder?: string;
   leftEyeAxis?: string;
   nearAdd?: string;
+  customEntry?: string | null;
   total?: number;
   received?: number;
   frame?: string;
@@ -219,12 +222,12 @@ export interface UpdateInventoryItemDto {
 
 export interface CreateCategoryDto {
   name: string;
-  type?: 'Frame' | 'Lens';
+  type?: string;
 }
 
 export interface UpdateCategoryDto {
   name: string;
-  type?: 'Frame' | 'Lens';
+  type?: string;
 }
 
 export interface CalculateClpcDto {
@@ -464,4 +467,35 @@ export interface BillSummary {
   totalOutstanding: number;
   totalPaid: number;
   totalOverdue: number;
+}
+
+export interface Banner {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  imageUrl: string;
+  linkUrl?: string | null;
+  isActive: boolean;
+  sortOrder: number;
+  companyId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateBannerDto {
+  title: string;
+  subtitle?: string;
+  imageUrl: string;
+  linkUrl?: string;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
+export interface UpdateBannerDto {
+  title?: string;
+  subtitle?: string;
+  imageUrl?: string;
+  linkUrl?: string;
+  isActive?: boolean;
+  sortOrder?: number;
 }

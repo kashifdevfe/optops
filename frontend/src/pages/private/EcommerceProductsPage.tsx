@@ -52,6 +52,8 @@ export const EcommerceProductsPage: React.FC = () => {
     inStock: true,
     stockCount: 0,
     featured: false,
+    discount: 0,
+    discountPercent: 0,
   });
   const [imagePreview, setImagePreview] = useState<string>('');
 
@@ -165,6 +167,8 @@ export const EcommerceProductsPage: React.FC = () => {
         inStock: product.inStock,
         stockCount: product.stockCount,
         featured: product.featured,
+        discount: product.discount || 0,
+        discountPercent: product.discountPercent || 0,
       });
       const parsedImages = parseImages(product.images);
       setImagePreview(parsedImages[0] || '');
@@ -183,6 +187,8 @@ export const EcommerceProductsPage: React.FC = () => {
         inStock: true,
         stockCount: 0,
         featured: false,
+        discount: 0,
+        discountPercent: 0,
       });
       setImagePreview('');
     }
@@ -209,6 +215,8 @@ export const EcommerceProductsPage: React.FC = () => {
       inStock: true,
       stockCount: 0,
       featured: false,
+      discount: 0,
+      discountPercent: 0,
     });
   };
 
@@ -216,23 +224,23 @@ export const EcommerceProductsPage: React.FC = () => {
     try {
       setError('');
       setSuccess('');
-      
+
       // Validate required fields
       if (!formData.name || !formData.name.trim()) {
         setError('Product name is required');
         return;
       }
-      
+
       if (formData.price <= 0) {
         setError('Price must be greater than 0');
         return;
       }
-      
+
       if (!formData.images || !formData.images.trim()) {
         setError('Please upload an image');
         return;
       }
-      
+
       // Prepare data - convert empty strings to null/undefined for optional fields
       const submitData: any = {
         name: formData.name.trim(),
@@ -247,8 +255,10 @@ export const EcommerceProductsPage: React.FC = () => {
         inStock: formData.inStock,
         stockCount: formData.stockCount || 0,
         featured: formData.featured || false,
+        discount: formData.discount || 0,
+        discountPercent: formData.discountPercent || 0,
       };
-      
+
       if (editingProduct) {
         await ecommerceApi.updateProduct(editingProduct.id, submitData);
         setSuccess('Product updated successfully');
@@ -264,12 +274,12 @@ export const EcommerceProductsPage: React.FC = () => {
     } catch (err: any) {
       console.error('Product save error:', err);
       let errorMessage = 'Failed to save product';
-      
+
       if (err.response?.data) {
         if (typeof err.response.data.error === 'string') {
           errorMessage = err.response.data.error;
         } else if (err.response.data.details && Array.isArray(err.response.data.details)) {
-          errorMessage = err.response.data.details.map((d: any) => 
+          errorMessage = err.response.data.details.map((d: any) =>
             `${d.path?.join('.') || 'field'}: ${d.message}`
           ).join(', ');
         } else if (err.response.data.error) {
@@ -278,7 +288,7 @@ export const EcommerceProductsPage: React.FC = () => {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
       console.error('Full error response:', err.response?.data);
     }
@@ -298,12 +308,12 @@ export const EcommerceProductsPage: React.FC = () => {
 
   const parseImages = (images: string): string[] => {
     if (!images || !images.trim()) return [];
-    
+
     // If already a data URL or http URL, return as is
     if (images.startsWith('data:') || images.startsWith('http')) {
       return [images];
     }
-    
+
     try {
       // Try to parse as JSON
       const parsed = JSON.parse(images);
@@ -626,6 +636,44 @@ export const EcommerceProductsPage: React.FC = () => {
                   />
                 }
                 label="Featured"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Discount Amount"
+                type="number"
+                value={formData.discount}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  const price = formData.price || 0;
+                  const percent = price > 0 ? (val / price) * 100 : 0;
+                  setFormData({
+                    ...formData,
+                    discount: val,
+                    discountPercent: parseFloat(percent.toFixed(2))
+                  });
+                }}
+                inputProps={{ min: 0 }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Discount Percentage (%)"
+                type="number"
+                value={formData.discountPercent}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  const price = formData.price || 0;
+                  const amount = (price * val) / 100;
+                  setFormData({
+                    ...formData,
+                    discountPercent: val,
+                    discount: parseFloat(amount.toFixed(2))
+                  });
+                }}
+                inputProps={{ min: 0, max: 100 }}
               />
             </Grid>
           </Grid>

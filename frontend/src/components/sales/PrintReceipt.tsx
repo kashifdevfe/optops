@@ -194,11 +194,15 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ sale, customer, comp
               <div class="column">
                 <div class="info-row">
                   <span class="info-label">Frame:</span>
-                  <span>${sale.frame}</span>
+                  <span>${sale.frame || 'N/A'}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">Lens:</span>
-                  <span>${sale.lens}</span>
+                  <span>${sale.lens || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                  <span class="info-label">Custom Entry:</span>
+                  <span>${sale.customEntry || 'N/A'}</span>
                 </div>
                 <div class="info-row">
                   <span class="info-label">Total:</span>
@@ -383,7 +387,7 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ sale, customer, comp
                 Frame:
               </Typography>
               <Typography sx={{ fontSize: '11px', fontFamily: "'Courier New', monospace" }}>
-                {sale.frame}
+                {sale.frame || 'N/A'}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
@@ -391,7 +395,15 @@ export const PrintReceipt: React.FC<PrintReceiptProps> = ({ sale, customer, comp
                 Lens:
               </Typography>
               <Typography sx={{ fontSize: '11px', fontFamily: "'Courier New', monospace" }}>
-                {sale.lens}
+                {sale.lens || 'N/A'}
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+              <Typography sx={{ fontSize: '11px', fontWeight: 700, fontFamily: "'Courier New', monospace" }}>
+                Custom Entry:
+              </Typography>
+              <Typography sx={{ fontSize: '11px', fontFamily: "'Courier New', monospace" }}>
+                {sale.customEntry || 'N/A'}
               </Typography>
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>

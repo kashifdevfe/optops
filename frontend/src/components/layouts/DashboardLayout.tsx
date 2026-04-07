@@ -35,6 +35,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import StoreIcon from '@mui/icons-material/Store';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
+import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
 import { useAppSelector, useAppDispatch } from '../../hooks/redux.js';
 import { logout, clearAuth } from '../../store/slices/authSlice.js';
 
@@ -65,10 +66,11 @@ export const DashboardLayout: React.FC = () => {
     { text: 'Salary & Bills', icon: <AttachMoneyIcon />, path: '/salary' },
     ...(company?.ecommerceEnabled
       ? [
-          { text: 'Ecommerce Mgt', icon: <StoreIcon />, path: '/ecommerce', divider: true },
-          { text: 'Products', icon: <ShoppingBagIcon />, path: '/ecommerce/products' },
-          { text: 'Orders', icon: <ReceiptIcon />, path: '/ecommerce/orders' },
-        ]
+        { text: 'Ecommerce Mgt', icon: <StoreIcon />, path: '/ecommerce', divider: true },
+        { text: 'Products', icon: <ShoppingBagIcon />, path: '/ecommerce/products' },
+        { text: 'Orders', icon: <ReceiptIcon />, path: '/ecommerce/orders' },
+        { text: 'Banners', icon: <ViewCarouselIcon />, path: '/ecommerce/banners' },
+      ]
       : []),
   ];
 
@@ -297,11 +299,11 @@ export const DashboardLayout: React.FC = () => {
                   {user?.email}
                 </Typography>
               </Box>
-              <MenuItem 
+              <MenuItem
                 onClick={(e) => {
                   e.stopPropagation();
                   handleLogout();
-                }} 
+                }}
                 sx={{ py: 1.5 }}
               >
                 <ListItemIcon>

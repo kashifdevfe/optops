@@ -297,6 +297,7 @@ export const AdminCustomersPage: React.FC = () => {
                           <TableCell>Order No</TableCell>
                           <TableCell>Frame</TableCell>
                           <TableCell>Lens</TableCell>
+                          <TableCell>Custom Entry</TableCell>
                           <TableCell>Total</TableCell>
                           <TableCell>Status</TableCell>
                           <TableCell>Delivery Date</TableCell>
@@ -307,8 +308,9 @@ export const AdminCustomersPage: React.FC = () => {
                         {selectedCustomer.sales.map((sale: any) => (
                           <TableRow key={sale.id}>
                             <TableCell>{sale.orderNo}</TableCell>
-                            <TableCell>{sale.frame}</TableCell>
-                            <TableCell>{sale.lens}</TableCell>
+                            <TableCell>{sale.frame || '-'}</TableCell>
+                            <TableCell>{sale.lens || '-'}</TableCell>
+                            <TableCell>{sale.customEntry || '-'}</TableCell>
                             <TableCell>${sale.total.toFixed(2)}</TableCell>
                             <TableCell>
                               <Chip

@@ -50,6 +50,10 @@ export const SalesPage: React.FC = () => {
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null);
   const [editingSale, setEditingSale] = useState<Sale | null>(null);
+  const [addCustomerOpen, setAddCustomerOpen] = useState(false);
+  const [creatingCustomer, setCreatingCustomer] = useState(false);
+  const [newCustomerError, setNewCustomerError] = useState<string | null>(null);
+  const [newCustomerData, setNewCustomerData] = useState({ name: '', phone: '', address: '' });
   const [formData, setFormData] = useState<CreateSaleDto>({
     customerId: '',
     rightEyeSphere: '0',
@@ -59,6 +63,7 @@ export const SalesPage: React.FC = () => {
     leftEyeCylinder: '0',
     leftEyeAxis: '0',
     nearAdd: '0',
+    customEntry: '',
     total: 0,
     received: 0,
     frame: '',
@@ -80,14 +85,14 @@ export const SalesPage: React.FC = () => {
   const loadFramesAndLenses = async () => {
     try {
       const categoriesData = await categoryApi.getCategories();
-      
+
       // Find Frame and Lens categories by type
       const frameCategories = categoriesData.filter((cat: Category) => cat.type === 'Frame');
       const lensCategories = categoriesData.filter((cat: Category) => cat.type === 'Lens');
 
       // Fetch inventory items for all Frame and Lens categories
       const [framesData, lensesData] = await Promise.all([
-        frameCategories.length > 0 
+        frameCategories.length > 0
           ? Promise.all(frameCategories.map((cat: Category) => inventoryApi.getInventoryItems(cat.id))).then((results) => results.flat())
           : Promise.resolve([]),
         lensCategories.length > 0
@@ -127,7 +132,7 @@ export const SalesPage: React.FC = () => {
   const handleOpen = async (sale?: Sale) => {
     // Reload frames and lenses to ensure fresh data
     await loadFramesAndLenses();
-    
+
     if (sale) {
       setEditingSale(sale);
       setFormData({
@@ -139,6 +144,7 @@ export const SalesPage: React.FC = () => {
         leftEyeCylinder: sale.leftEyeCylinder,
         leftEyeAxis: sale.leftEyeAxis,
         nearAdd: sale.nearAdd,
+        customEntry: sale.customEntry || '',
         total: sale.total,
         received: sale.received,
         frame: sale.frame,
@@ -158,6 +164,7 @@ export const SalesPage: React.FC = () => {
         leftEyeCylinder: '0',
         leftEyeAxis: '0',
         nearAdd: '0',
+        customEntry: '',
         total: 0,
         received: 0,
         frame: '',
@@ -173,6 +180,50 @@ export const SalesPage: React.FC = () => {
   const handleClose = () => {
     setOpen(false);
     setEditingSale(null);
+  };
+
+  const ADD_CUSTOMER_VALUE = '__add_new_customer__';
+
+  const handleCustomerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === ADD_CUSTOMER_VALUE) {
+      setNewCustomerError(null);
+      setNewCustomerData({ name: '', phone: '', address: '' });
+      setAddCustomerOpen(true);
+      return;
+    }
+    setFormData((prev) => ({ ...prev, customerId: value }));
+  };
+
+  const handleCloseAddCustomer = () => {
+    if (creatingCustomer) return;
+    setAddCustomerOpen(false);
+  };
+
+  const handleCreateCustomer = async () => {
+    const name = newCustomerData.name.trim();
+    const phone = newCustomerData.phone.trim();
+    const address = newCustomerData.address.trim();
+
+    if (!name || !phone || !address) {
+      setNewCustomerError('Please fill Name, Phone, and Address.');
+      return;
+    }
+
+    try {
+      setCreatingCustomer(true);
+      setNewCustomerError(null);
+
+      const created = await customerApi.createCustomer({ name, phone, address });
+      const customersData = await customerApi.getCustomers();
+      setCustomers(customersData);
+      setFormData((prev) => ({ ...prev, customerId: created.id }));
+      setAddCustomerOpen(false);
+    } catch (err: any) {
+      setNewCustomerError(err.response?.data?.error || 'Failed to create customer');
+    } finally {
+      setCreatingCustomer(false);
+    }
   };
 
   const handleChange = (field: keyof CreateSaleDto) => (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -231,6 +282,13 @@ export const SalesPage: React.FC = () => {
     return `${sphere}/${cylinder}/${axis}`;
   };
 
+  // Generate sphere/cylinder dropdown options: +25.00 to -25.00 in 0.25 steps
+  const sphereCylinderOptions: string[] = [];
+  for (let i = 25; i >= -25; i -= 0.25) {
+    const val = i.toFixed(2);
+    sphereCylinderOptions.push(i > 0 ? `+${val}` : val);
+  }
+
   const formatDate = (date: string | null) => {
     if (!date) return 'Invalid Date';
     try {
@@ -247,10 +305,10 @@ export const SalesPage: React.FC = () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       delivery.setHours(0, 0, 0, 0);
-      
+
       const diffTime = delivery.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
+
       if (diffDays < 0) {
         return { status: 'passed', days: Math.abs(diffDays), message: `Delivery date passed ${Math.abs(diffDays)} day${Math.abs(diffDays) !== 1 ? 's' : ''} ago` };
       } else if (diffDays <= 3) {
@@ -310,6 +368,7 @@ export const SalesPage: React.FC = () => {
                   <TableCell>REMAINING</TableCell>
                   <TableCell>FRAME</TableCell>
                   <TableCell>LENS</TableCell>
+                <TableCell>CUSTOM ENTRY</TableCell>
                   <TableCell>ENTRY</TableCell>
                   <TableCell>DELIVERY</TableCell>
                   <TableCell>STATUS</TableCell>
@@ -331,14 +390,15 @@ export const SalesPage: React.FC = () => {
                     <TableCell>{formatCurrency(sale.total)}</TableCell>
                     <TableCell>{formatCurrency(sale.received)}</TableCell>
                     <TableCell>{formatCurrency(sale.remaining)}</TableCell>
-                    <TableCell>{sale.frame}</TableCell>
-                    <TableCell>{sale.lens}</TableCell>
+                  <TableCell>{sale.frame || '-'}</TableCell>
+                  <TableCell>{sale.lens || '-'}</TableCell>
+                  <TableCell>{sale.customEntry || '-'}</TableCell>
                     <TableCell>{formatDate(sale.entryDate)}</TableCell>
                     <TableCell>
                       {(() => {
                         const deliveryStatus = getDeliveryDateStatus(sale.deliveryDate);
                         const deliveryDateText = formatDate(sale.deliveryDate);
-                        
+
                         if (deliveryStatus) {
                           if (deliveryStatus.status === 'passed') {
                             return (
@@ -360,7 +420,7 @@ export const SalesPage: React.FC = () => {
                             );
                           }
                         }
-                        
+
                         return deliveryDateText;
                       })()}
                     </TableCell>
@@ -368,11 +428,11 @@ export const SalesPage: React.FC = () => {
                       {(() => {
                         const deliveryStatus = getDeliveryDateStatus(sale.deliveryDate);
                         const isCompleted = sale.status === 'completed';
-                        
+
                         let buttonColor: 'success' | 'warning' | 'error' | 'primary' = 'primary';
                         let icon = null;
                         let tooltipText = isCompleted ? 'Mark as Pending' : 'Mark as Complete';
-                        
+
                         if (!isCompleted && deliveryStatus) {
                           if (deliveryStatus.status === 'passed') {
                             buttonColor = 'error';
@@ -387,7 +447,7 @@ export const SalesPage: React.FC = () => {
                           buttonColor = 'success';
                           icon = <CheckCircleIcon sx={{ mr: 0.5, fontSize: '1rem' }} />;
                         }
-                        
+
                         return (
                           <Tooltip title={tooltipText} arrow>
                             <Button
@@ -443,9 +503,12 @@ export const SalesPage: React.FC = () => {
                 select
                 label="Customer"
                 value={formData.customerId}
-                onChange={(e) => setFormData((prev) => ({ ...prev, customerId: e.target.value }))}
+                onChange={handleCustomerSelect}
                 required
               >
+                <MenuItem value={ADD_CUSTOMER_VALUE}>
+                  <em>+ Add new customer</em>
+                </MenuItem>
                 {customers.map((customer) => (
                   <MenuItem key={customer.id} value={customer.id}>
                     {customer.name}
@@ -460,10 +523,30 @@ export const SalesPage: React.FC = () => {
               </Typography>
             </Grid>
             <Grid item xs={4}>
-              <TextField fullWidth label="Sphere" value={formData.rightEyeSphere} onChange={handleChange('rightEyeSphere')} />
+              <TextField
+                fullWidth
+                select
+                label="Sphere"
+                value={formData.rightEyeSphere}
+                onChange={(e) => setFormData((prev) => ({ ...prev, rightEyeSphere: e.target.value }))}
+              >
+                {sphereCylinderOptions.map((opt) => (
+                  <MenuItem key={`rs-${opt}`} value={opt}>{opt}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={4}>
-              <TextField fullWidth label="Cylinder" value={formData.rightEyeCylinder} onChange={handleChange('rightEyeCylinder')} />
+              <TextField
+                fullWidth
+                select
+                label="Cylinder"
+                value={formData.rightEyeCylinder}
+                onChange={(e) => setFormData((prev) => ({ ...prev, rightEyeCylinder: e.target.value }))}
+              >
+                {sphereCylinderOptions.map((opt) => (
+                  <MenuItem key={`rc-${opt}`} value={opt}>{opt}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={4}>
               <TextField fullWidth label="Axis" value={formData.rightEyeAxis} onChange={handleChange('rightEyeAxis')} />
@@ -475,10 +558,30 @@ export const SalesPage: React.FC = () => {
               </Typography>
             </Grid>
             <Grid item xs={4}>
-              <TextField fullWidth label="Sphere" value={formData.leftEyeSphere} onChange={handleChange('leftEyeSphere')} />
+              <TextField
+                fullWidth
+                select
+                label="Sphere"
+                value={formData.leftEyeSphere}
+                onChange={(e) => setFormData((prev) => ({ ...prev, leftEyeSphere: e.target.value }))}
+              >
+                {sphereCylinderOptions.map((opt) => (
+                  <MenuItem key={`ls-${opt}`} value={opt}>{opt}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={4}>
-              <TextField fullWidth label="Cylinder" value={formData.leftEyeCylinder} onChange={handleChange('leftEyeCylinder')} />
+              <TextField
+                fullWidth
+                select
+                label="Cylinder"
+                value={formData.leftEyeCylinder}
+                onChange={(e) => setFormData((prev) => ({ ...prev, leftEyeCylinder: e.target.value }))}
+              >
+                {sphereCylinderOptions.map((opt) => (
+                  <MenuItem key={`lc-${opt}`} value={opt}>{opt}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
             <Grid item xs={4}>
               <TextField fullWidth label="Axis" value={formData.leftEyeAxis} onChange={handleChange('leftEyeAxis')} />
@@ -494,7 +597,6 @@ export const SalesPage: React.FC = () => {
                 label="Frame"
                 value={formData.frame}
                 onChange={(e) => setFormData((prev) => ({ ...prev, frame: e.target.value }))}
-                required
               >
                 <MenuItem value="">
                   <em>Select Frame</em>
@@ -513,7 +615,6 @@ export const SalesPage: React.FC = () => {
                 label="Lens"
                 value={formData.lens}
                 onChange={(e) => setFormData((prev) => ({ ...prev, lens: e.target.value }))}
-                required
               >
                 <MenuItem value="">
                   <em>Select Lens</em>
@@ -524,6 +625,16 @@ export const SalesPage: React.FC = () => {
                   </MenuItem>
                 ))}
               </TextField>
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <TextField
+                fullWidth
+                label="Custom Entry (Optional)"
+                value={formData.customEntry || ''}
+                onChange={(e) => setFormData((prev) => ({ ...prev, customEntry: e.target.value }))}
+                placeholder="If not Frame/Lens, write here"
+              />
             </Grid>
 
             <Grid item xs={12} sm={4}>
@@ -581,6 +692,52 @@ export const SalesPage: React.FC = () => {
           <Button onClick={handleClose}>Cancel</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={success}>
             {editingSale ? 'Update' : 'Create'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={addCustomerOpen} onClose={handleCloseAddCustomer} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Customer</DialogTitle>
+        <DialogContent>
+          {newCustomerError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {newCustomerError}
+            </Alert>
+          )}
+          <Grid container spacing={2} sx={{ mt: 0 }}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Name"
+                value={newCustomerData.name}
+                onChange={(e) => setNewCustomerData((p) => ({ ...p, name: e.target.value }))}
+                autoFocus
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Phone"
+                value={newCustomerData.phone}
+                onChange={(e) => setNewCustomerData((p) => ({ ...p, phone: e.target.value }))}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Address"
+                value={newCustomerData.address}
+                onChange={(e) => setNewCustomerData((p) => ({ ...p, address: e.target.value }))}
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAddCustomer} disabled={creatingCustomer}>
+            Cancel
+          </Button>
+          <Button onClick={handleCreateCustomer} variant="contained" disabled={creatingCustomer}>
+            {creatingCustomer ? 'Saving…' : 'Save'}
           </Button>
         </DialogActions>
       </Dialog>

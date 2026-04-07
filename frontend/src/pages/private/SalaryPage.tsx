@@ -31,6 +31,7 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import { salaryApi } from '../../services/api.js';
 import type {
   Employee,
@@ -363,6 +364,51 @@ export const SalaryPage: React.FC = () => {
 
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+  const handleExportSalaries = () => {
+    const csvContent = [
+      ['EMPLOYEE', 'MONTH/YEAR', 'AMOUNT', 'PAYMENT DATE', 'STATUS', 'NOTES'].join(','),
+      ...salaries.map((salary) => [
+        salary.employee?.name || 'N/A',
+        `${monthNames[salary.month - 1]} ${salary.year}`,
+        salary.amount,
+        salary.paymentDate ? format(new Date(salary.paymentDate), 'MMM dd, yyyy') : '-',
+        salary.status,
+        salary.notes || '',
+      ].join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `salaries-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleExportBills = () => {
+    const csvContent = [
+      ['DESCRIPTION', 'CATEGORY', 'AMOUNT', 'DUE DATE', 'PAYMENT DATE', 'STATUS', 'NOTES'].join(','),
+      ...bills.map((bill) => [
+        `"${bill.description}"`,
+        bill.category || '-',
+        bill.amount,
+        format(new Date(bill.dueDate), 'MMM dd, yyyy'),
+        bill.paymentDate ? format(new Date(bill.paymentDate), 'MMM dd, yyyy') : '-',
+        bill.status,
+        bill.notes || '',
+      ].join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bills-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <Box>
       <Box sx={{ mb: 4 }}>
@@ -504,7 +550,10 @@ export const SalaryPage: React.FC = () => {
             </Grid>
           </Grid>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3, gap: 2 }}>
+            <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExportSalaries}>
+              Export To Excel
+            </Button>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleSalaryOpen()}>
               Add Salary
             </Button>
@@ -617,7 +666,10 @@ export const SalaryPage: React.FC = () => {
             </Grid>
           </Grid>
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3, gap: 2 }}>
+            <Button variant="outlined" startIcon={<FileDownloadIcon />} onClick={handleExportBills}>
+              Export To Excel
+            </Button>
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleBillOpen()}>
               Add Bill
             </Button>
