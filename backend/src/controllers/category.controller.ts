@@ -5,12 +5,9 @@ import { AuthenticatedRequest } from '../types/index.js';
 export const categoryController = {
   async getCategories(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.companyId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const categories = await categoryService.getCategories(req.companyId);
+      const companyId = req.companyId || null;
+      const type = req.query.type as string | undefined;
+      const categories = await categoryService.getCategories(companyId, type);
       res.json(categories);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
@@ -19,12 +16,8 @@ export const categoryController = {
 
   async getCategory(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      if (!req.companyId) {
-        res.status(401).json({ error: 'Unauthorized' });
-        return;
-      }
-
-      const category = await categoryService.getCategoryById(req.companyId, req.params.id);
+      const companyId = req.companyId || null;
+      const category = await categoryService.getCategoryById(companyId, req.params.id);
       res.json(category);
     } catch (error: any) {
       res.status(404).json({ error: error.message });

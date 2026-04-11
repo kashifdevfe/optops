@@ -27,11 +27,12 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { ecommerceApi, EcommerceProduct, CreateEcommerceProductDto } from '../../services/api.js';
+import { ecommerceApi, ecommerceCategoryApi, EcommerceProduct, CreateEcommerceProductDto } from '../../services/api.js';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner.js';
 
 export const EcommerceProductsPage: React.FC = () => {
   const [products, setProducts] = useState<EcommerceProduct[]>([]);
+  const [categories, setCategories] = useState<string[]>(['Eyeglasses', 'Sunglasses', 'Contact Lenses', 'Frames']);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -60,12 +61,21 @@ export const EcommerceProductsPage: React.FC = () => {
   const loadingRef = useRef(false); // Prevent duplicate calls
 
   useEffect(() => {
-    // Prevent duplicate calls (especially important with React.StrictMode)
-    if (loadingRef.current) {
-      return;
-    }
+    if (loadingRef.current) return;
     loadProducts();
+    loadCategories();
   }, []);
+
+  const loadCategories = async () => {
+    try {
+      const data = await ecommerceCategoryApi.getCategories();
+      if (data.length > 0) {
+        setCategories(data.map((c) => c.name));
+      }
+    } catch {
+      // fallback to defaults already set in state
+    }
+  };
 
   const loadProducts = async () => {
     if (loadingRef.current) return; // Prevent duplicate calls
@@ -540,10 +550,9 @@ export const EcommerceProductsPage: React.FC = () => {
                 SelectProps={{ native: true }}
                 required
               >
-                <option value="Eyeglasses">Eyeglasses</option>
-                <option value="Sunglasses">Sunglasses</option>
-                <option value="Contact Lenses">Contact Lenses</option>
-                <option value="Frames">Frames</option>
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </TextField>
             </Grid>
             <Grid item xs={12} sm={6}>

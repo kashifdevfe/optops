@@ -97,10 +97,7 @@ export const initializeAuth = createAsyncThunk('auth/initialize', async (_, { ge
       themeSettings,
     };
   } catch (error: any) {
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      clearAuthFromStorage();
-      return rejectWithValue('Session expired');
-    }
+    // Network or server error — do NOT clear the stored session
     throw error;
   }
 });
@@ -222,16 +219,8 @@ const authSlice = createSlice({
       })
       .addCase(initializeAuth.rejected, (state, action) => {
         state.isLoading = false;
-        const errorMessage = action.payload as string;
-        if (errorMessage === 'Session expired' || errorMessage === 'No stored session') {
-          state.user = null;
-          state.company = null;
-          state.themeSettings = null;
-          state.isAuthenticated = false;
-          clearAuthFromStorage();
-        } else {
-          state.error = errorMessage || 'Failed to initialize auth';
-        }
+        // Do not clear auth on failure — keep the user logged in
+        state.error = (action.payload as string) || (action.error?.message) || 'Failed to initialize auth';
       });
   },
 });

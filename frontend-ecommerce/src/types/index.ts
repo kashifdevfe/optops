@@ -4,7 +4,7 @@ export interface Product {
   description?: string;
   price: number;
   images: string;
-  category: 'Eyeglasses' | 'Sunglasses' | 'Contact Lenses' | 'Frames';
+  category: string;
   gender?: 'Men' | 'Women' | 'Unisex';
   frameType?: string;
   lensType?: string;

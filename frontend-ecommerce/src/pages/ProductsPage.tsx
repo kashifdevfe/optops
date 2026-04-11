@@ -16,13 +16,14 @@ import {
   MenuItem,
   Chip,
 } from '@mui/material';
-import { productApi } from '../services/api';
+import { productApi, categoryApi } from '../services/api';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export const ProductsPage = () => {
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: '',
@@ -32,10 +33,31 @@ export const ProductsPage = () => {
   });
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const categoryParam = queryParams.get('category');
+    if (categoryParam) {
+      setFilters(prev => ({ ...prev, category: categoryParam }));
+    }
+  }, [location.search]);
 
   useEffect(() => {
     loadProducts();
   }, [filters]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await categoryApi.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Failed to load categories:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const loadProducts = async () => {
     try {
@@ -137,10 +159,11 @@ export const ProductsPage = () => {
             }}
           >
             <MenuItem value="">All Categories</MenuItem>
-            <MenuItem value="Eyeglasses">Eyeglasses</MenuItem>
-            <MenuItem value="Sunglasses">Sunglasses</MenuItem>
-            <MenuItem value="Contact Lenses">Contact Lenses</MenuItem>
-            <MenuItem value="Frames">Frames</MenuItem>
+            {categories.map((cat) => (
+              <MenuItem key={cat.id || cat.name} value={cat.name}>
+                {cat.name}
+              </MenuItem>
+            ))}
           </Select>
         </FormControl>
         <FormControl 

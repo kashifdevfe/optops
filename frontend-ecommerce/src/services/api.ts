@@ -59,3 +59,12 @@ export const bannerApi = {
   },
 };
 
+export const categoryApi = {
+  getCategories: async () => {
+    // Note: the backend route is actually /categories with type=ecommerce
+    const response = await api.get('/categories', { params: { type: 'ecommerce' } });
+    return response.data;
+  },
+};
+
+

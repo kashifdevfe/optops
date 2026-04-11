@@ -32,6 +32,7 @@ router.use('/clpc', clpcRoutes);
 router.use('/audits', auditRoutes);
 router.use('/ecommerce/products', productRoutes);
 router.use('/ecommerce/orders', orderRoutes);
+router.use('/ecommerce/categories', categoryRoutes);
 router.use('/salary', salaryRoutes);
 router.use('/banners', bannerRoutes);
 router.use('/ecommerce/banners', bannerRoutes);

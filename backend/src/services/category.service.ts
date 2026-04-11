@@ -1,10 +1,62 @@
 import prisma from '../config/database.js';
 import { CreateCategoryDto, UpdateCategoryDto } from '../dto/category.dto.js';
 
+const DEFAULT_ECOMMERCE_CATEGORIES = ['Eyeglasses', 'Sunglasses', 'Contact Lenses', 'Frames'];
+
 export const categoryService = {
-  async getCategories(companyId: string) {
+  async getCategories(companyId: string | null, type?: string) {
+    const where: any = {};
+    
+    // If it's an ecommerce request (type='ecommerce'), ensure default categories exist
+    if (companyId && type === 'ecommerce') {
+      for (const catName of DEFAULT_ECOMMERCE_CATEGORIES) {
+        const existing = await prisma.category.findFirst({
+          where: { 
+            companyId, 
+            name: { equals: catName, mode: 'insensitive' } 
+          }
+        });
+        
+        if (!existing) {
+          await prisma.category.create({
+            data: {
+              companyId,
+              name: catName,
+              type: 'ecommerce'
+            }
+          });
+        } else if (existing.type !== 'ecommerce' && existing.type === null) {
+          // If it exists but has no type, mark it as ecommerce
+          await prisma.category.update({
+            where: { id: existing.id },
+            data: { type: 'ecommerce' }
+          });
+        }
+      }
+    }
+
+    if (companyId) {
+      where.companyId = companyId;
+    } else {
+      // Get all companies with ecommerce enabled
+      const companiesWithEcommerce = await prisma.company.findMany({
+        where: { ecommerceEnabled: true },
+        select: { id: true },
+      });
+      const companyIds = companiesWithEcommerce.map((c: any) => c.id);
+      if (companyIds.length > 0) {
+        where.companyId = { in: companyIds };
+      } else {
+        return [];
+      }
+    }
+
+    if (type !== undefined) {
+      where.type = type;
+    }
+
     const categories = await prisma.category.findMany({
-      where: { companyId },
+      where,
       orderBy: {
         name: 'asc',
       },
@@ -20,12 +72,14 @@ export const categoryService = {
     return categories;
   },
 
-  async getCategoryById(companyId: string, categoryId: string) {
+  async getCategoryById(companyId: string | null, categoryId: string) {
+    const where: any = { id: categoryId };
+    if (companyId) {
+      where.companyId = companyId;
+    }
+
     const category = await prisma.category.findFirst({
-      where: {
-        id: categoryId,
-        companyId,
-      },
+      where,
       include: {
         _count: {
           select: {
@@ -47,12 +101,22 @@ export const categoryService = {
     const existing = await prisma.category.findFirst({
       where: {
         companyId,
-        name: data.name.trim(),
+        name: {
+          equals: data.name.trim(),
+          mode: 'insensitive',
+        },
       },
     });
 
     if (existing) {
-      throw new Error('Category with this name already exists');
+      // If it exists but has a different type, update it
+      if (existing.type !== data.type) {
+        return await prisma.category.update({
+          where: { id: existing.id },
+          data: { type: data.type || null },
+        });
+      }
+      return existing;
     }
 
     const category = await prisma.category.create({

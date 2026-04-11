@@ -25,6 +25,7 @@ import { SalaryPage } from './pages/private/SalaryPage.js';
 import { EcommerceProductsPage } from './pages/private/EcommerceProductsPage.js';
 import { EcommerceOrdersPage } from './pages/private/EcommerceOrdersPage.js';
 import { BannersPage } from './pages/private/BannersPage.js';
+import { EcommerceCategoriesPage } from './pages/private/EcommerceCategoriesPage.js';
 import { AdminLoginPage } from './pages/admin/AdminLoginPage.js';
 import { AdminCompaniesPage } from './pages/admin/AdminCompaniesPage.js';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage.js';
@@ -63,6 +64,7 @@ const AppRoutes: React.FC = () => {
           <Route path="/ecommerce" element={<Navigate to="/ecommerce/products" replace />} />
           <Route path="/ecommerce/products" element={<EcommerceProductsPage />} />
           <Route path="/ecommerce/orders" element={<EcommerceOrdersPage />} />
+          <Route path="/ecommerce/categories" element={<EcommerceCategoriesPage />} />
           <Route path="/ecommerce/banners" element={<BannersPage />} />
           <Route path="/users" element={<UsersPage />} />
           <Route path="/company" element={<CompanySettingsPage />} />

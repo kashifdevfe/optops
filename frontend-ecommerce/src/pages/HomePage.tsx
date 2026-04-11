@@ -12,7 +12,7 @@ import {
   Chip,
   CircularProgress,
 } from '@mui/material';
-import { productApi, bannerApi } from '../services/api';
+import { productApi, bannerApi, categoryApi } from '../services/api';
 import { Product, Banner } from '../types';
 import { useCart } from '../context/CartContext';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +21,7 @@ import { HeroBanner } from '../components/HeroBanner'; // Assuming this import p
 
 export const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [bannersLoading, setBannersLoading] = useState(true);
@@ -30,12 +31,14 @@ export const HomePage = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [products, fetchedBanners] = await Promise.all([
+        const [products, fetchedBanners, fetchedCategories] = await Promise.all([
           productApi.getProducts({ featured: true }),
           bannerApi.getBanners(),
+          categoryApi.getCategories(),
         ]);
         setFeaturedProducts(products.slice(0, 6));
         setBanners(fetchedBanners || []);
+        setCategories(fetchedCategories || []);
       } catch (error) {
         console.error('Failed to load data:', error);
       } finally {
@@ -151,6 +154,51 @@ export const HomePage = () => {
       />
 
       {renderHero()}
+
+      {categories.length > 0 && (
+        <Container maxWidth="xl" sx={{ pt: { xs: 8, md: 12 }, position: 'relative', zIndex: 1 }}>
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography
+              variant="h3"
+              sx={{
+                fontWeight: 700,
+                mb: 2,
+                color: '#1A1A1A',
+                fontSize: { xs: '2rem', md: '2.5rem' },
+              }}
+            >
+              Browse Categories
+            </Typography>
+            <Box sx={{ width: 60, height: 4, bgcolor: 'primary.main', mx: 'auto', borderRadius: '2px' }} />
+          </Box>
+          <Grid container spacing={2} justifyContent="center" sx={{ flexWrap: 'wrap' }}>
+            {categories.map((cat) => (
+              <Grid item key={cat.id || cat.name}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate(`/products?category=${encodeURIComponent(cat.name)}`)}
+                  sx={{
+                    px: 4,
+                    py: 1.5,
+                    borderRadius: '50px',
+                    borderColor: 'rgba(0, 0, 0, 0.1)',
+                    color: '#1A1A1A',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    '&:hover': {
+                      borderColor: 'primary.main',
+                      bgcolor: 'primary.main',
+                      color: '#000000',
+                    },
+                  }}
+                >
+                  {cat.name}
+                </Button>
+              </Grid>
+            ))}
+          </Grid>
+        </Container>
+      )}
 
       <Container maxWidth="xl" sx={{ py: { xs: 6, md: 12 }, position: 'relative', zIndex: 1 }}>
         <Box sx={{ textAlign: 'center', mb: 8 }}>
