@@ -22,9 +22,66 @@ import {
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ImageIcon from '@mui/icons-material/Image';
+import CloseIcon from '@mui/icons-material/Close';
 import { ecommerceApi, EcommerceOrder } from '../../services/api.js';
 import { LoadingSpinner } from '../../components/common/LoadingSpinner.js';
 import { useAppSelector } from '../../hooks/redux.js';
+
+const parseItemImage = (images?: string | null): string => {
+  if (!images || !images.trim()) return '';
+
+  const trimmed = images.trim();
+  if (trimmed.startsWith('data:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      const first = parsed[0];
+      if (!first) return '';
+      if (typeof first === 'string') {
+        const firstTrimmed = first.trim();
+        if (firstTrimmed.startsWith('data:') || firstTrimmed.startsWith('http://') || firstTrimmed.startsWith('https://')) {
+          return firstTrimmed;
+        }
+        if (firstTrimmed.startsWith('/9j/') || firstTrimmed.startsWith('iVBORw') || firstTrimmed.length > 100) {
+          return `data:image/jpeg;base64,${firstTrimmed}`;
+        }
+        return firstTrimmed;
+      }
+    }
+    if (typeof parsed === 'string') {
+      const parsedTrimmed = parsed.trim();
+      if (parsedTrimmed.startsWith('data:') || parsedTrimmed.startsWith('http://') || parsedTrimmed.startsWith('https://')) {
+        return parsedTrimmed;
+      }
+      if (parsedTrimmed.startsWith('/9j/') || parsedTrimmed.startsWith('iVBORw') || parsedTrimmed.length > 100) {
+        return `data:image/jpeg;base64,${parsedTrimmed}`;
+      }
+      return parsedTrimmed;
+    }
+  } catch {
+    // If not JSON, check comma separated
+    if (trimmed.includes(',')) {
+      const first = trimmed.split(',')[0].trim();
+      if (first.startsWith('data:') || first.startsWith('http://') || first.startsWith('https://')) {
+        return first;
+      }
+      if (first.startsWith('/9j/') || first.startsWith('iVBORw') || first.length > 100) {
+        return `data:image/jpeg;base64,${first}`;
+      }
+      return first;
+    }
+  }
+
+  if (trimmed.startsWith('/9j/') || trimmed.startsWith('iVBORw') || trimmed.length > 100) {
+    return `data:image/jpeg;base64,${trimmed}`;
+  }
+
+  return trimmed;
+};
 
 export const EcommerceOrdersPage: React.FC = () => {
   const { company, themeSettings } = useAppSelector((state) => state.auth);
@@ -32,6 +89,7 @@ export const EcommerceOrdersPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<EcommerceOrder | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [error, setError] = useState('');
 
   const loadingRef = useRef(false);
@@ -105,13 +163,24 @@ export const EcommerceOrdersPage: React.FC = () => {
       order.items && order.items.length > 0
         ? order.items
             .map(
-              (item, i) => `
+              (item, i) => {
+                const itemImg = parseItemImage(item.product?.images);
+                return `
           <tr style="background:${i % 2 === 0 ? '#f9fafc' : '#fff'}">
-            <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;">${item.product?.name || 'N/A'}</td>
+            <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;">
+              <div style="display:flex;align-items:center;gap:12px;">
+                ${itemImg ? `<img src="${itemImg}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;"/>` : ''}
+                <div>
+                  <div style="font-weight:600;color:#1f2937;">${item.product?.name || 'N/A'}</div>
+                  ${item.product?.category ? `<div style="font-size:11px;color:#6b7280;">${item.product.category}</div>` : ''}
+                </div>
+              </div>
+            </td>
             <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;text-align:center;">${item.quantity}</td>
             <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;text-align:right;">Rs ${item.price.toFixed(2)}</td>
             <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;text-align:right;">Rs ${(item.price * item.quantity).toFixed(2)}</td>
-          </tr>`
+          </tr>`;
+              }
             )
             .join('')
         : `<tr><td colspan="4" style="padding:14px;text-align:center;color:#999;">No items</td></tr>`;
@@ -393,30 +462,96 @@ export const EcommerceOrdersPage: React.FC = () => {
               {selectedOrder.items && selectedOrder.items.length > 0 && (
                 <>
                   <Grid item xs={12}>
-                    <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>
+                    <Typography variant="h6" sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
                       Order Items
                     </Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <TableContainer>
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 1.5, overflow: 'hidden' }}>
                       <Table size="small">
                         <TableHead>
-                          <TableRow>
-                            <TableCell>Product</TableCell>
-                            <TableCell>Quantity</TableCell>
-                            <TableCell>Price</TableCell>
-                            <TableCell>Total</TableCell>
+                          <TableRow sx={{ bgcolor: 'action.hover' }}>
+                            <TableCell sx={{ width: 70, fontWeight: 600 }}>Picture</TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>Product</TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>Quantity</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>Price</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>Total</TableCell>
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {selectedOrder.items.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>{item.product?.name || 'N/A'}</TableCell>
-                              <TableCell>{item.quantity}</TableCell>
-                              <TableCell>Rs {item.price.toFixed(2)}</TableCell>
-                              <TableCell>Rs {(item.price * item.quantity).toFixed(2)}</TableCell>
-                            </TableRow>
-                          ))}
+                          {selectedOrder.items.map((item) => {
+                            const itemImage = parseItemImage(item.product?.images);
+                            return (
+                              <TableRow key={item.id} hover>
+                                <TableCell sx={{ py: 1 }}>
+                                  {itemImage ? (
+                                    <Tooltip title="Click to view full picture" arrow>
+                                      <Box
+                                        component="img"
+                                        src={itemImage}
+                                        alt={item.product?.name || 'Item picture'}
+                                        onClick={() => setPreviewImage(itemImage)}
+                                        sx={{
+                                          width: 52,
+                                          height: 52,
+                                          objectFit: 'cover',
+                                          borderRadius: 1.5,
+                                          border: '1px solid',
+                                          borderColor: 'divider',
+                                          display: 'block',
+                                          cursor: 'pointer',
+                                          transition: 'all 0.2s ease-in-out',
+                                          '&:hover': {
+                                            transform: 'scale(1.08)',
+                                            boxShadow: 2,
+                                          },
+                                        }}
+                                        onError={(e) => {
+                                          (e.target as HTMLImageElement).src = '/placeholder.jpg';
+                                        }}
+                                      />
+                                    </Tooltip>
+                                  ) : (
+                                    <Box
+                                      sx={{
+                                        width: 52,
+                                        height: 52,
+                                        bgcolor: 'action.hover',
+                                        borderRadius: 1.5,
+                                        border: '1px dashed',
+                                        borderColor: 'divider',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        color: 'text.disabled',
+                                      }}
+                                    >
+                                      <ImageIcon sx={{ fontSize: 24 }} />
+                                    </Box>
+                                  )}
+                                </TableCell>
+                                <TableCell>
+                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                    {item.product?.name || 'N/A'}
+                                  </Typography>
+                                  {item.product?.category && (
+                                    <Typography variant="caption" color="text.secondary" display="block">
+                                      {item.product.category}
+                                      {item.product.frameType ? ` • ${item.product.frameType}` : ''}
+                                      {item.product.frameSize ? ` • Size: ${item.product.frameSize}` : ''}
+                                    </Typography>
+                                  )}
+                                </TableCell>
+                                <TableCell align="center">
+                                  <Chip label={item.quantity} size="small" variant="outlined" />
+                                </TableCell>
+                                <TableCell align="right">Rs {item.price.toFixed(2)}</TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 600 }}>
+                                  Rs {(item.price * item.quantity).toFixed(2)}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
                         </TableBody>
                       </Table>
                     </TableContainer>
@@ -424,7 +559,7 @@ export const EcommerceOrdersPage: React.FC = () => {
                 </>
               )}
               <Grid item xs={12}>
-                <Typography variant="h6" sx={{ mt: 2 }}>
+                <Typography variant="h6" sx={{ mt: 2, fontWeight: 700 }}>
                   Total Amount: Rs {selectedOrder.totalAmount.toFixed(2)}
                 </Typography>
               </Grid>
@@ -447,6 +582,39 @@ export const EcommerceOrdersPage: React.FC = () => {
           )}
           <Button onClick={() => setDialogOpen(false)}>Close</Button>
         </DialogActions>
+      </Dialog>
+
+      {/* Product Image Enlarge Dialog */}
+      <Dialog
+        open={Boolean(previewImage)}
+        onClose={() => setPreviewImage(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Item Picture
+          </Typography>
+          <IconButton size="small" onClick={() => setPreviewImage(null)}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ textAlign: 'center', p: 3, pt: 1 }}>
+          {previewImage && (
+            <Box
+              component="img"
+              src={previewImage}
+              alt="Item picture preview"
+              sx={{
+                maxWidth: '100%',
+                maxHeight: '65vh',
+                objectFit: 'contain',
+                borderRadius: 2,
+                boxShadow: 2,
+              }}
+            />
+          )}
+        </DialogContent>
       </Dialog>
     </Box>
   );
