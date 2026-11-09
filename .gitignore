@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Env (never commit secrets)
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Build
+dist/
+build/
+
+# Logs / OS / IDE
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Prisma / local DB
+*.db
+*.db-journal
+.prisma/
+
+# Deploy
+.vercel
