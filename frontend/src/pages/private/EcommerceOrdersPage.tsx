@@ -21,7 +21,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import PrintIcon from '@mui/icons-material/Print';
 import ImageIcon from '@mui/icons-material/Image';
 import CloseIcon from '@mui/icons-material/Close';
 import { ecommerceApi, EcommerceOrder } from '../../services/api.js';
@@ -147,163 +147,290 @@ export const EcommerceOrdersPage: React.FC = () => {
     }
   };
 
-  const handleDownloadPdf = (order: EcommerceOrder) => {
+  const handlePrintReceipt = (order: EcommerceOrder) => {
     const companyName = company?.name || 'Company';
     const logoUrl = themeSettings?.logoUrl || '';
     const address = company?.address || '';
     const phone = company?.phone || '';
     const email = company?.email || '';
-    const orderDate = new Date(order.createdAt).toLocaleDateString('en-PK', {
+    const orderDate = new Date(order.createdAt).toLocaleString('en-PK', {
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
+    const statusLabel = (order.status || 'pending').replace(/_/g, ' ').toUpperCase();
 
     const itemsRows =
       order.items && order.items.length > 0
         ? order.items
-            .map(
-              (item, i) => {
-                const itemImg = parseItemImage(item.product?.images);
-                return `
-          <tr style="background:${i % 2 === 0 ? '#f9fafc' : '#fff'}">
-            <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;">
-              <div style="display:flex;align-items:center;gap:12px;">
-                ${itemImg ? `<img src="${itemImg}" alt="" style="width:42px;height:42px;object-fit:cover;border-radius:4px;border:1px solid #e2e8f0;"/>` : ''}
-                <div>
-                  <div style="font-weight:600;color:#1f2937;">${item.product?.name || 'N/A'}</div>
-                  ${item.product?.category ? `<div style="font-size:11px;color:#6b7280;">${item.product.category}</div>` : ''}
-                </div>
-              </div>
+            .map((item) => {
+              const name = item.product?.name || 'Item';
+              const meta = [item.product?.category, item.product?.frameType, item.product?.frameSize]
+                .filter(Boolean)
+                .join(' · ');
+              return `
+          <tr>
+            <td class="item-name">
+              <div class="name">${name}</div>
+              ${meta ? `<div class="meta">${meta}</div>` : ''}
             </td>
-            <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;text-align:center;">${item.quantity}</td>
-            <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;text-align:right;">Rs ${item.price.toFixed(2)}</td>
-            <td style="padding:10px 14px;border-bottom:1px solid #e8eaf0;text-align:right;">Rs ${(item.price * item.quantity).toFixed(2)}</td>
+            <td class="num">${item.quantity}</td>
+            <td class="num">Rs ${item.price.toFixed(2)}</td>
+            <td class="num">Rs ${(item.price * item.quantity).toFixed(2)}</td>
           </tr>`;
-              }
-            )
+            })
             .join('')
-        : `<tr><td colspan="4" style="padding:14px;text-align:center;color:#999;">No items</td></tr>`;
+        : `<tr><td colspan="4" class="empty">No items</td></tr>`;
 
     const prescriptionBlock = order.isCustomOrder
       ? `
-      <div style="margin-top:24px;padding:0 32px;">
-        <h3 style="font-size:13px;font-weight:700;color:#374151;border-bottom:2px solid #e5e7eb;padding-bottom:6px;margin-bottom:14px;letter-spacing:.5px;text-transform:uppercase;">Prescription</h3>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <div class="section">
+        <div class="section-title">Prescription</div>
+        <table class="rx-table">
           <thead>
-            <tr style="background:#f3f4f6;">
-              <th style="padding:8px 12px;text-align:left;font-weight:600;color:#6b7280;"></th>
-              <th style="padding:8px 12px;text-align:center;font-weight:600;color:#6b7280;">Sphere</th>
-              <th style="padding:8px 12px;text-align:center;font-weight:600;color:#6b7280;">Cylinder</th>
-              <th style="padding:8px 12px;text-align:center;font-weight:600;color:#6b7280;">Axis</th>
+            <tr>
+              <th></th>
+              <th>SPH</th>
+              <th>CYL</th>
+              <th>AXIS</th>
             </tr>
           </thead>
           <tbody>
-            <tr style="background:#fff;">
-              <td style="padding:8px 12px;font-weight:600;color:#374151;">Right Eye (OD)</td>
-              <td style="padding:8px 12px;text-align:center;">${order.rightEyeSphere || '—'}</td>
-              <td style="padding:8px 12px;text-align:center;">${order.rightEyeCylinder || '—'}</td>
-              <td style="padding:8px 12px;text-align:center;">${order.rightEyeAxis || '—'}</td>
+            <tr>
+              <td>OD (R)</td>
+              <td>${order.rightEyeSphere || '—'}</td>
+              <td>${order.rightEyeCylinder || '—'}</td>
+              <td>${order.rightEyeAxis || '—'}</td>
             </tr>
-            <tr style="background:#f9fafc;">
-              <td style="padding:8px 12px;font-weight:600;color:#374151;">Left Eye (OS)</td>
-              <td style="padding:8px 12px;text-align:center;">${order.leftEyeSphere || '—'}</td>
-              <td style="padding:8px 12px;text-align:center;">${order.leftEyeCylinder || '—'}</td>
-              <td style="padding:8px 12px;text-align:center;">${order.leftEyeAxis || '—'}</td>
+            <tr>
+              <td>OS (L)</td>
+              <td>${order.leftEyeSphere || '—'}</td>
+              <td>${order.leftEyeCylinder || '—'}</td>
+              <td>${order.leftEyeAxis || '—'}</td>
             </tr>
-            ${order.nearAdd ? `<tr style="background:#fff;"><td style="padding:8px 12px;font-weight:600;color:#374151;">Near Add</td><td colspan="3" style="padding:8px 12px;">${order.nearAdd}</td></tr>` : ''}
-            ${order.frameName ? `<tr style="background:#f9fafc;"><td style="padding:8px 12px;font-weight:600;color:#374151;">Frame</td><td colspan="3" style="padding:8px 12px;">${order.frameName}</td></tr>` : ''}
           </tbody>
         </table>
-        ${order.prescriptionNotes ? `<p style="margin-top:10px;font-size:12px;color:#6b7280;"><strong>Notes:</strong> ${order.prescriptionNotes}</p>` : ''}
+        ${order.nearAdd ? `<div class="rx-note"><strong>Near Add:</strong> ${order.nearAdd}</div>` : ''}
+        ${order.frameName ? `<div class="rx-note"><strong>Frame:</strong> ${order.frameName}</div>` : ''}
+        ${order.prescriptionNotes ? `<div class="rx-note"><strong>Notes:</strong> ${order.prescriptionNotes}</div>` : ''}
       </div>`
-      : '';
+      : order.prescriptionNotes
+        ? `<div class="section"><div class="section-title">Notes</div><div class="rx-note">${order.prescriptionNotes}</div></div>`
+        : '';
 
     const printContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Invoice - ${order.orderNumber}</title>
+  <title>Receipt - ${order.orderNumber}</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Inter',sans-serif;background:#fff;color:#1f2937;font-size:13px;}
-    @page{size:A4;margin:16mm;}
-    @media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}}
+    body{
+      font-family:'IBM Plex Sans',sans-serif;
+      background:#f3f4f6;
+      color:#111827;
+      font-size:12.5px;
+      line-height:1.45;
+    }
+    .receipt{
+      width:80mm;
+      max-width:100%;
+      margin:16px auto;
+      background:#fff;
+      padding:18px 16px 22px;
+      box-shadow:0 8px 24px rgba(0,0,0,.08);
+    }
+    .center{text-align:center;}
+    .logo{max-height:56px;max-width:160px;object-fit:contain;margin-bottom:8px;}
+    .brand{font-size:18px;font-weight:700;letter-spacing:-.2px;}
+    .muted{color:#6b7280;font-size:11px;}
+    .divider{
+      border:0;
+      border-top:1px dashed #d1d5db;
+      margin:12px 0;
+    }
+    .title{
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:1.4px;
+      text-transform:uppercase;
+      margin-bottom:6px;
+    }
+    .order-no{
+      font-family:'IBM Plex Mono',monospace;
+      font-weight:600;
+      font-size:12px;
+    }
+    .meta-row{
+      display:flex;
+      justify-content:space-between;
+      gap:8px;
+      margin:4px 0;
+      font-size:11.5px;
+    }
+    .customer{
+      margin-top:2px;
+    }
+    .customer .name{font-weight:700;font-size:13px;}
+    .section{margin-top:4px;}
+    .section-title{
+      font-size:10.5px;
+      font-weight:700;
+      text-transform:uppercase;
+      letter-spacing:.8px;
+      color:#4b5563;
+      margin-bottom:6px;
+    }
+    table.items{
+      width:100%;
+      border-collapse:collapse;
+    }
+    table.items th{
+      font-size:10px;
+      text-transform:uppercase;
+      letter-spacing:.5px;
+      color:#6b7280;
+      font-weight:600;
+      padding:0 0 6px;
+      border-bottom:1px solid #e5e7eb;
+      text-align:left;
+    }
+    table.items th.num,
+    table.items td.num{text-align:right;}
+    table.items td{
+      padding:8px 0;
+      border-bottom:1px dotted #e5e7eb;
+      vertical-align:top;
+    }
+    .item-name .name{font-weight:600;}
+    .item-name .meta{font-size:10.5px;color:#6b7280;margin-top:2px;}
+    .empty{text-align:center;color:#9ca3af;padding:12px 0;}
+    .totals{
+      margin-top:10px;
+    }
+    .totals .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      margin:4px 0;
+    }
+    .totals .grand{
+      margin-top:8px;
+      padding-top:8px;
+      border-top:2px solid #111827;
+      font-size:15px;
+      font-weight:700;
+    }
+    .rx-table{width:100%;border-collapse:collapse;font-size:11.5px;}
+    .rx-table th,.rx-table td{padding:4px 2px;text-align:center;}
+    .rx-table th{color:#6b7280;font-size:10px;text-transform:uppercase;}
+    .rx-table td:first-child,.rx-table th:first-child{text-align:left;font-weight:600;}
+    .rx-note{font-size:11.5px;margin-top:4px;color:#374151;}
+    .footer{
+      margin-top:14px;
+      text-align:center;
+      font-size:11px;
+      color:#6b7280;
+    }
+    .status{
+      display:inline-block;
+      margin-top:6px;
+      padding:2px 8px;
+      border:1px solid #d1d5db;
+      border-radius:999px;
+      font-size:10px;
+      font-weight:600;
+      letter-spacing:.4px;
+    }
+    @page{size:auto;margin:8mm;}
+    @media print{
+      body{background:#fff;}
+      .receipt{box-shadow:none;margin:0 auto;width:80mm;}
+      body{print-color-adjust:exact;-webkit-print-color-adjust:exact;}
+    }
   </style>
 </head>
 <body>
-  <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:24px 32px 20px;border-bottom:3px solid #1e40af;">
-    <div style="display:flex;align-items:center;gap:16px;">
-      ${logoUrl ? `<img src="${logoUrl}" alt="Logo" style="max-height:64px;max-width:140px;object-fit:contain;"/>` : ''}
-      <div>
-        <div style="font-size:22px;font-weight:800;color:#1e40af;letter-spacing:-0.5px;">${companyName}</div>
-        ${address ? `<div style="font-size:11px;color:#6b7280;margin-top:3px;">${address}</div>` : ''}
-        ${phone ? `<div style="font-size:11px;color:#6b7280;">Tel: ${phone}</div>` : ''}
-        ${email ? `<div style="font-size:11px;color:#6b7280;">${email}</div>` : ''}
+  <div class="receipt">
+    <div class="center">
+      ${logoUrl ? `<img class="logo" src="${logoUrl}" alt="Logo"/>` : ''}
+      <div class="brand">${companyName}</div>
+      ${address ? `<div class="muted">${address}</div>` : ''}
+      ${phone ? `<div class="muted">Tel: ${phone}</div>` : ''}
+      ${email ? `<div class="muted">${email}</div>` : ''}
+    </div>
+
+    <hr class="divider"/>
+
+    <div class="center">
+      <div class="title">Sales Receipt</div>
+      <div class="order-no">#${order.orderNumber}</div>
+      <div class="muted" style="margin-top:4px;">${orderDate}</div>
+      <div class="status">${statusLabel}</div>
+    </div>
+
+    <hr class="divider"/>
+
+    <div class="customer">
+      <div class="section-title">Customer</div>
+      <div class="name">${order.customerName}</div>
+      <div class="muted">${order.customerPhone}</div>
+      <div class="muted">${order.customerAddress}</div>
+      <div class="meta-row" style="margin-top:6px;">
+        <span class="muted">Order type</span>
+        <span>${order.isCustomOrder ? 'Custom' : 'Regular'}</span>
       </div>
     </div>
-    <div style="text-align:right;">
-      <div style="font-size:26px;font-weight:800;color:#1e40af;letter-spacing:2px;">INVOICE</div>
-      <div style="font-size:13px;font-weight:600;color:#374151;margin-top:4px;font-family:monospace;">#${order.orderNumber}</div>
-      <div style="font-size:11px;color:#6b7280;margin-top:4px;">${orderDate}</div>
-      <div style="margin-top:8px;display:inline-block;background:#dcfce7;color:#166534;font-size:11px;font-weight:700;padding:4px 14px;border-radius:999px;letter-spacing:.5px;text-transform:uppercase;">&#10003; Completed</div>
+
+    <hr class="divider"/>
+
+    <div class="section">
+      <table class="items">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th class="num">Qty</th>
+            <th class="num">Price</th>
+            <th class="num">Total</th>
+          </tr>
+        </thead>
+        <tbody>${itemsRows}</tbody>
+      </table>
     </div>
-  </div>
 
-  <div style="padding:20px 32px 0;display:flex;gap:24px;flex-wrap:wrap;">
-    <div style="background:#f1f5f9;border-radius:10px;padding:16px 20px;min-width:220px;">
-      <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Bill To</div>
-      <div style="font-size:15px;font-weight:700;color:#1f2937;">${order.customerName}</div>
-      <div style="font-size:12px;color:#6b7280;margin-top:4px;">${order.customerPhone}</div>
-      <div style="font-size:12px;color:#6b7280;margin-top:2px;">${order.customerAddress}</div>
+    <div class="totals">
+      <div class="row grand">
+        <span>TOTAL</span>
+        <span>Rs ${order.totalAmount.toFixed(2)}</span>
+      </div>
     </div>
-    <div style="background:#f1f5f9;border-radius:10px;padding:16px 20px;min-width:160px;">
-      <div style="font-size:10px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">Order Type</div>
-      <div style="font-size:13px;font-weight:600;color:#1e40af;">${order.isCustomOrder ? 'Custom Order' : 'Regular Order'}</div>
+
+    ${prescriptionBlock ? `<hr class="divider"/>${prescriptionBlock}` : ''}
+
+    <hr class="divider"/>
+
+    <div class="footer">
+      <div>Thank you for your purchase!</div>
+      <div style="margin-top:4px;">${companyName}</div>
+      <div style="margin-top:8px;font-size:10px;">Printed ${new Date().toLocaleString('en-PK')}</div>
     </div>
-  </div>
-
-  <div style="padding:20px 32px 0;">
-    <div style="font-size:11px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.8px;border-bottom:2px solid #e5e7eb;padding-bottom:6px;margin-bottom:0;">Order Items</div>
-    <table style="width:100%;border-collapse:collapse;font-size:13px;">
-      <thead>
-        <tr style="background:#1e40af;color:#fff;">
-          <th style="padding:10px 14px;text-align:left;font-weight:600;">Product</th>
-          <th style="padding:10px 14px;text-align:center;font-weight:600;">Qty</th>
-          <th style="padding:10px 14px;text-align:right;font-weight:600;">Unit Price</th>
-          <th style="padding:10px 14px;text-align:right;font-weight:600;">Total</th>
-        </tr>
-      </thead>
-      <tbody>${itemsRows}</tbody>
-    </table>
-  </div>
-
-  <div style="padding:16px 32px 0;display:flex;justify-content:flex-end;">
-    <div style="background:#1e40af;color:#fff;border-radius:10px;padding:14px 28px;min-width:200px;text-align:right;">
-      <div style="font-size:10px;font-weight:600;opacity:.75;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Total Amount</div>
-      <div style="font-size:22px;font-weight:800;">Rs ${order.totalAmount.toFixed(2)}</div>
-    </div>
-  </div>
-
-  ${prescriptionBlock}
-
-  <div style="margin-top:48px;padding:16px 32px;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;">
-    <div style="font-size:11px;color:#9ca3af;">Thank you for your order!</div>
-    <div style="font-size:13px;font-weight:700;color:#1e40af;">${companyName}</div>
-    <div style="font-size:11px;color:#9ca3af;">Generated: ${new Date().toLocaleString()}</div>
   </div>
 
   <script>
     window.onload = function() {
-      window.print();
-      window.onafterprint = function() { window.close(); };
+      setTimeout(function() {
+        window.print();
+        window.onafterprint = function() { window.close(); };
+      }, 250);
     };
   </script>
 </body>
 </html>`;
 
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
+    const printWindow = window.open('', '_blank', 'width=420,height=720');
     if (printWindow) {
       printWindow.document.write(printContent);
       printWindow.document.close();
@@ -402,7 +529,30 @@ export const EcommerceOrdersPage: React.FC = () => {
 
       {/* Order Details Dialog */}
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Order Details - {selectedOrder?.orderNumber}</DialogTitle>
+        <DialogTitle
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            pr: 2,
+          }}
+        >
+          <Typography component="span" variant="h6" sx={{ fontWeight: 600 }}>
+            Order Details - {selectedOrder?.orderNumber}
+          </Typography>
+          {selectedOrder && (
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<PrintIcon />}
+              onClick={() => handlePrintReceipt(selectedOrder)}
+              sx={{ textTransform: 'none', fontWeight: 600, flexShrink: 0 }}
+            >
+              Print
+            </Button>
+          )}
+        </DialogTitle>
         <DialogContent>
           {selectedOrder && (
             <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -567,19 +717,6 @@ export const EcommerceOrdersPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          {selectedOrder?.status === 'completed' && (
-            <Tooltip title="Download branded PDF invoice with company stamp">
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<PictureAsPdfIcon />}
-                onClick={() => handleDownloadPdf(selectedOrder)}
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              >
-                Download PDF
-              </Button>
-            </Tooltip>
-          )}
           <Button onClick={() => setDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>

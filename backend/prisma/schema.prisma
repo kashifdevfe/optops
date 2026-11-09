@@ -30,9 +30,6 @@ model Company {
   users          User[]
   ecommerceProducts EcommerceProduct[]
   ecommerceOrders    EcommerceOrder[]
-  employees      Employee[]
-  salaries       Salary[]
-  bills          Bill[]
   banners        Banner[]
 
   @@map("companies")
@@ -170,9 +167,6 @@ model Audit {
   costOfGoodsSold   Float       @default(0)  // COGS (cost of frames + lenses sold)
   netProfit         Float       @default(0)  // Gross Sales - COGS
   profitMargin      Float       @default(0)  // (Net Profit / Gross Sales) * 100
-  includeExpenses   Boolean     @default(false)  // Whether to include bills and salaries
-  totalExpenses     Float       @default(0)  // Total bills + salaries for the period
-  finalNetProfit    Float       @default(0)  // Net Profit - Total Expenses
   categoryBreakdown String?     // JSON string with category-wise breakdown
   companyId         String
   createdAt         DateTime    @default(now())
@@ -286,60 +280,6 @@ model EcommerceOrderItem {
   order     EcommerceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("ecommerce_order_items")
-}
-
-model Employee {
-  id        String   @id @default(cuid())
-  name      String
-  position  String?
-  phone     String?
-  email     String?
-  address   String?
-  salary    Float    @default(0)  // Monthly salary amount
-  isActive  Boolean  @default(true)
-  companyId String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  salaries  Salary[]
-
-  @@map("employees")
-}
-
-model Salary {
-  id          String   @id @default(cuid())
-  employeeId String
-  amount      Float
-  month       Int      // 1-12
-  year        Int
-  paymentDate DateTime?
-  status      String   @default("pending") // pending, paid, overdue
-  notes       String?
-  companyId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@unique([employeeId, month, year, companyId])
-  @@map("salaries")
-}
-
-model Bill {
-  id          String   @id @default(cuid())
-  description String
-  amount      Float
-  category    String?  // e.g., "Utilities", "Rent", "Supplies", "Other"
-  dueDate     DateTime
-  paymentDate DateTime?
-  status      String   @default("outstanding") // outstanding, paid, overdue
-  notes       String?
-  companyId   String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@map("bills")
 }
 
 model SuperAdmin {

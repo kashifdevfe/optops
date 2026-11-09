@@ -297,9 +297,6 @@ export interface Audit {
   costOfGoodsSold: number;
   netProfit: number;
   profitMargin: number;
-  includeExpenses: boolean;
-  totalExpenses: number;
-  finalNetProfit: number;
   categoryBreakdown: string | null; // JSON string
   companyId: string;
   createdAt: string;
@@ -320,7 +317,6 @@ export interface CreateAuditDto {
   endDate: string;
   period?: 'week' | 'month' | 'year';
   notes?: string;
-  includeExpenses?: boolean;
   items: AuditItemDto[];
 }
 
@@ -330,7 +326,6 @@ export interface UpdateAuditDto {
   endDate?: string;
   period?: 'week' | 'month' | 'year';
   notes?: string;
-  includeExpenses?: boolean;
   items?: AuditItemDto[];
 }
 
@@ -348,125 +343,6 @@ export interface AuditSummary {
 export interface GetAuditsResponse {
   audits: Audit[];
   summary: AuditSummary;
-}
-
-export interface Employee {
-  id: string;
-  name: string;
-  position: string | null;
-  phone: string | null;
-  email: string | null;
-  address: string | null;
-  salary: number;
-  isActive: boolean;
-  companyId: string;
-  createdAt: string;
-  updatedAt: string;
-  salaries?: Salary[];
-}
-
-export interface Salary {
-  id: string;
-  employeeId: string;
-  employee?: Employee;
-  amount: number;
-  month: number;
-  year: number;
-  paymentDate: string | null;
-  status: 'pending' | 'paid' | 'overdue';
-  notes: string | null;
-  companyId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Bill {
-  id: string;
-  description: string;
-  amount: number;
-  category: string | null;
-  dueDate: string;
-  paymentDate: string | null;
-  status: 'outstanding' | 'paid' | 'overdue';
-  notes: string | null;
-  companyId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface CreateEmployeeDto {
-  name: string;
-  position?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  salary?: number;
-  isActive?: boolean;
-}
-
-export interface UpdateEmployeeDto {
-  name?: string;
-  position?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  salary?: number;
-  isActive?: boolean;
-}
-
-export interface CreateSalaryDto {
-  employeeId: string;
-  amount: number;
-  month: number;
-  year: number;
-  paymentDate?: string;
-  status?: 'pending' | 'paid' | 'overdue';
-  notes?: string;
-}
-
-export interface UpdateSalaryDto {
-  employeeId?: string;
-  amount?: number;
-  month?: number;
-  year?: number;
-  paymentDate?: string;
-  status?: 'pending' | 'paid' | 'overdue';
-  notes?: string;
-}
-
-export interface CreateBillDto {
-  description: string;
-  amount: number;
-  category?: string;
-  dueDate: string;
-  paymentDate?: string;
-  status?: 'outstanding' | 'paid' | 'overdue';
-  notes?: string;
-}
-
-export interface UpdateBillDto {
-  description?: string;
-  amount?: number;
-  category?: string;
-  dueDate?: string;
-  paymentDate?: string;
-  status?: 'outstanding' | 'paid' | 'overdue';
-  notes?: string;
-}
-
-export interface SalarySummary {
-  totalEmployees: number;
-  totalPaid: number;
-  totalPending: number;
-  totalOverdue: number;
-  totalSalaries: number;
-}
-
-export interface BillSummary {
-  totalBills: number;
-  totalOutstanding: number;
-  totalPaid: number;
-  totalOverdue: number;
 }
 
 export interface Banner {

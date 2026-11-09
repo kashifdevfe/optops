@@ -5,8 +5,7 @@ import { CreateAuditDto, UpdateAuditDto, GetAuditsQueryDto } from '../dto/audit.
 async function calculateAuditFinancials(
   companyId: string,
   startDate: Date,
-  endDate: Date,
-  includeExpenses: boolean
+  endDate: Date
 ) {
   // Get sales for the audit period
   const sales = await prisma.sale.findMany({
@@ -173,45 +172,11 @@ async function calculateAuditFinancials(
   const netProfit = grossSales - costOfGoodsSold;
   const profitMargin = grossSales > 0 ? (netProfit / grossSales) * 100 : 0;
 
-  // Calculate expenses (bills + salaries) if includeExpenses is true
-  let totalExpenses = 0;
-  if (includeExpenses) {
-    // Get bills for the period
-    const bills = await prisma.bill.findMany({
-      where: {
-        companyId,
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-    });
-    const totalBills = bills.reduce((sum: number, bill: any) => sum + bill.amount, 0);
-
-    // Get salaries for the period
-    const salaries = await prisma.salary.findMany({
-      where: {
-        companyId,
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      },
-    });
-    const totalSalaries = salaries.reduce((sum: number, salary: any) => sum + salary.amount, 0);
-
-    totalExpenses = totalBills + totalSalaries;
-  }
-
-  const finalNetProfit = netProfit - totalExpenses;
-
   return {
     grossSales,
     costOfGoodsSold,
     netProfit,
     profitMargin,
-    totalExpenses,
-    finalNetProfit,
     categoryBreakdown,
   };
 }
@@ -336,7 +301,6 @@ export const auditService = {
     const auditDate = data.auditDate ? new Date(data.auditDate) : new Date();
     const startDate = new Date(data.startDate);
     const endDate = new Date(data.endDate);
-    const includeExpenses = data.includeExpenses || false;
 
     // Ensure dates are at start/end of day
     startDate.setHours(0, 0, 0, 0);
@@ -379,7 +343,7 @@ export const auditService = {
     }
 
     // Calculate financial metrics using helper function
-    const financials = await calculateAuditFinancials(companyId, startDate, endDate, includeExpenses);
+    const financials = await calculateAuditFinancials(companyId, startDate, endDate);
 
     const audit = await prisma.audit.create({
       data: {
@@ -394,9 +358,6 @@ export const auditService = {
         costOfGoodsSold: financials.costOfGoodsSold,
         netProfit: financials.netProfit,
         profitMargin: financials.profitMargin,
-        includeExpenses,
-        totalExpenses: financials.totalExpenses,
-        finalNetProfit: financials.finalNetProfit,
         categoryBreakdown: JSON.stringify(financials.categoryBreakdown),
         companyId,
         items: {
@@ -433,13 +394,11 @@ export const auditService = {
     if (data.endDate !== undefined) updateData.endDate = new Date(data.endDate);
     if (data.notes !== undefined) updateData.notes = data.notes;
     if (data.period !== undefined) updateData.period = data.period;
-    if (data.includeExpenses !== undefined) updateData.includeExpenses = data.includeExpenses;
 
-    // If dates or includeExpenses changed, recalculate financial metrics
-    const shouldRecalculate = data.startDate !== undefined || data.endDate !== undefined || data.includeExpenses !== undefined;
+    // If dates changed, recalculate financial metrics
+    const shouldRecalculate = data.startDate !== undefined || data.endDate !== undefined;
     const startDate = data.startDate ? new Date(data.startDate) : (audit.startDate ? new Date(audit.startDate) : null);
     const endDate = data.endDate ? new Date(data.endDate) : (audit.endDate ? new Date(audit.endDate) : null);
-    const includeExpenses = data.includeExpenses !== undefined ? data.includeExpenses : audit.includeExpenses;
 
     // If items are being updated, recalculate totals
     if (data.items) {
@@ -493,19 +452,17 @@ export const auditService = {
       });
     }
 
-    // Recalculate financial metrics if dates or includeExpenses changed
+    // Recalculate financial metrics if dates changed
     if (shouldRecalculate && startDate && endDate) {
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(23, 59, 59, 999);
-      const financials = await calculateAuditFinancials(companyId, startDate, endDate, includeExpenses);
+      const financials = await calculateAuditFinancials(companyId, startDate, endDate);
 
       updateData.totalSalesValue = financials.grossSales;
       updateData.grossSales = financials.grossSales;
       updateData.costOfGoodsSold = financials.costOfGoodsSold;
       updateData.netProfit = financials.netProfit;
       updateData.profitMargin = financials.profitMargin;
-      updateData.totalExpenses = financials.totalExpenses;
-      updateData.finalNetProfit = financials.finalNetProfit;
       updateData.categoryBreakdown = JSON.stringify(financials.categoryBreakdown);
     }
 

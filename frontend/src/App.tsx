@@ -21,7 +21,6 @@ import { SalesPage } from './pages/private/SalesPage.js';
 import { InventoryPage } from './pages/private/InventoryPage.js';
 import { CalculatorsPage } from './pages/private/CalculatorsPage.js';
 import { AuditsPage } from './pages/private/AuditsPage.js';
-import { SalaryPage } from './pages/private/SalaryPage.js';
 import { EcommerceProductsPage } from './pages/private/EcommerceProductsPage.js';
 import { EcommerceOrdersPage } from './pages/private/EcommerceOrdersPage.js';
 import { BannersPage } from './pages/private/BannersPage.js';
@@ -60,7 +59,6 @@ const AppRoutes: React.FC = () => {
           <Route path="/calculators" element={<CalculatorsPage />} />
           <Route path="/clpc" element={<Navigate to="/calculators" replace />} />
           <Route path="/audits" element={<AuditsPage />} />
-          <Route path="/salary" element={<SalaryPage />} />
           <Route path="/ecommerce" element={<Navigate to="/ecommerce/products" replace />} />
           <Route path="/ecommerce/products" element={<EcommerceProductsPage />} />
           <Route path="/ecommerce/orders" element={<EcommerceOrdersPage />} />

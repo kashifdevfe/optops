@@ -26,8 +26,6 @@ import {
   InputLabel,
   Paper,
   Divider,
-  Checkbox,
-  FormControlLabel,
   Collapse,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
@@ -61,7 +59,6 @@ export const AuditsPage: React.FC = () => {
     endDate: format(new Date(), 'yyyy-MM-dd'),
     period: undefined,
     notes: '',
-    includeExpenses: false,
     items: [],
   });
   const [auditItems, setAuditItems] = useState<Record<string, { expected: number; actual: number; notes?: string }>>({});
@@ -117,7 +114,6 @@ export const AuditsPage: React.FC = () => {
         endDate: audit.endDate ? format(new Date(audit.endDate), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
         period: audit.period || undefined,
         notes: audit.notes || '',
-        includeExpenses: audit.includeExpenses || false,
         items: audit.items.map((item) => ({
           inventoryItemId: item.inventoryItemId,
           expectedQuantity: item.expectedQuantity,
@@ -141,7 +137,6 @@ export const AuditsPage: React.FC = () => {
         endDate: format(new Date(), 'yyyy-MM-dd'),
         period: undefined,
         notes: '',
-        includeExpenses: false,
         items: [],
       });
     }
@@ -192,7 +187,6 @@ export const AuditsPage: React.FC = () => {
         startDate: formData.startDate,
         endDate: formData.endDate,
         notes: formData.notes,
-        includeExpenses: formData.includeExpenses,
         items,
       };
 
@@ -364,8 +358,6 @@ export const AuditsPage: React.FC = () => {
                   <TableCell>GROSS SALES</TableCell>
                   <TableCell>COST OF GOODS SOLD</TableCell>
                   <TableCell>NET PROFIT</TableCell>
-                  <TableCell>EXPENSES</TableCell>
-                  <TableCell>FINAL NET PROFIT</TableCell>
                   <TableCell>MARGIN</TableCell>
                   <TableCell>INVENTORY VALUE</TableCell>
                   <TableCell align="right">ACTIONS</TableCell>
@@ -412,32 +404,6 @@ export const AuditsPage: React.FC = () => {
                         >
                           {formatCurrency(audit.netProfit || 0)}
                         </Typography>
-                      </TableCell>
-                      <TableCell>
-                        {audit.includeExpenses ? (
-                          <Typography variant="body2" color="error.main">
-                            {formatCurrency(audit.totalExpenses || 0)}
-                          </Typography>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            N/A
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {audit.includeExpenses ? (
-                          <Typography
-                            variant="body2"
-                            fontWeight={600}
-                            color={audit.finalNetProfit >= 0 ? 'success.main' : 'error.main'}
-                          >
-                            {formatCurrency(audit.finalNetProfit || 0)}
-                          </Typography>
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            N/A
-                          </Typography>
-                        )}
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -526,20 +492,6 @@ export const AuditsPage: React.FC = () => {
               />
               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
                 End date for sales analysis
-              </Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={formData.includeExpenses || false}
-                    onChange={(e) => setFormData((prev) => ({ ...prev, includeExpenses: e.target.checked }))}
-                  />
-                }
-                label="Include expenses (bills and salaries) in net profit calculation"
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, ml: 4, display: 'block' }}>
-                If checked, bills and salaries for the date range will be deducted from net profit
               </Typography>
             </Grid>
             <Grid item xs={12}>
@@ -704,30 +656,6 @@ export const AuditsPage: React.FC = () => {
                     </CardContent>
                   </Card>
                 </Grid>
-                {viewingAudit.includeExpenses && (
-                  <>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card variant="outlined">
-                        <CardContent>
-                          <Typography variant="body2" color="text.secondary">Total Expenses</Typography>
-                          <Typography variant="h6" color="error.main">
-                            {formatCurrency(viewingAudit.totalExpenses || 0)}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                    <Grid item xs={12} sm={6} md={3}>
-                      <Card variant="outlined">
-                        <CardContent>
-                          <Typography variant="body2" color="text.secondary">Final Net Profit</Typography>
-                          <Typography variant="h6" color={viewingAudit.finalNetProfit >= 0 ? 'success.main' : 'error.main'}>
-                            {formatCurrency(viewingAudit.finalNetProfit || 0)}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  </>
-                )}
               </Grid>
 
               {viewingAudit.categoryBreakdown && (

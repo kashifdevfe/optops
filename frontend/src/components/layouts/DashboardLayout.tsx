@@ -32,7 +32,6 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import PersonIcon from '@mui/icons-material/Person';
 import CalculateIcon from '@mui/icons-material/Calculate';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import StoreIcon from '@mui/icons-material/Store';
 import ShoppingBagIcon from '@mui/icons-material/ShoppingBag';
 import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
@@ -64,7 +63,6 @@ export const DashboardLayout: React.FC = () => {
     { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' },
     { text: 'Calculators', icon: <CalculateIcon />, path: '/calculators' },
     { text: 'Audits', icon: <ReceiptIcon />, path: '/audits' },
-    { text: 'Salary & Bills', icon: <AttachMoneyIcon />, path: '/salary' },
     ...(company?.ecommerceEnabled
       ? [
         { text: 'Ecommerce Mgt', icon: <StoreIcon />, path: '/ecommerce', divider: true },

@@ -11,7 +11,6 @@ import clpcRoutes from './clpc.routes.js';
 import auditRoutes from './audit.routes.js';
 import productRoutes from './product.routes.js';
 import orderRoutes from './order.routes.js';
-import salaryRoutes from './salary.routes.js';
 import bannerRoutes from './banner.routes.js';
 import adminRoutes from './admin.routes.js';
 
@@ -33,7 +32,6 @@ router.use('/audits', auditRoutes);
 router.use('/ecommerce/products', productRoutes);
 router.use('/ecommerce/orders', orderRoutes);
 router.use('/ecommerce/categories', categoryRoutes);
-router.use('/salary', salaryRoutes);
 router.use('/banners', bannerRoutes);
 router.use('/ecommerce/banners', bannerRoutes);
 

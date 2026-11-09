@@ -32,17 +32,6 @@ import type {
   UpdateAuditDto,
   AuditSummary,
   GetAuditsResponse,
-  Employee,
-  Salary,
-  Bill,
-  CreateEmployeeDto,
-  UpdateEmployeeDto,
-  CreateSalaryDto,
-  UpdateSalaryDto,
-  CreateBillDto,
-  UpdateBillDto,
-  SalarySummary,
-  BillSummary,
 } from '../types/index.js';
 
 const api = axios.create({
@@ -325,83 +314,6 @@ export const adminApi = {
   },
   deleteCustomer: async (id: string): Promise<void> => {
     await api.delete(`/admin/customers/${id}`);
-  },
-};
-
-export const salaryApi = {
-  // Employee methods
-  getEmployees: async (): Promise<Employee[]> => {
-    const response = await api.get('/salary/employees');
-    return response.data;
-  },
-  getEmployee: async (id: string): Promise<Employee> => {
-    const response = await api.get(`/salary/employees/${id}`);
-    return response.data;
-  },
-  createEmployee: async (data: CreateEmployeeDto): Promise<Employee> => {
-    const response = await api.post('/salary/employees', data);
-    return response.data;
-  },
-  updateEmployee: async (id: string, data: UpdateEmployeeDto): Promise<Employee> => {
-    const response = await api.patch(`/salary/employees/${id}`, data);
-    return response.data;
-  },
-  deleteEmployee: async (id: string): Promise<void> => {
-    await api.delete(`/salary/employees/${id}`);
-  },
-
-  // Salary methods
-  getSalaries: async (employeeId?: string): Promise<Salary[]> => {
-    const params = employeeId ? { employeeId } : {};
-    const response = await api.get('/salary/salaries', { params });
-    return response.data;
-  },
-  getSalary: async (id: string): Promise<Salary> => {
-    const response = await api.get(`/salary/salaries/${id}`);
-    return response.data;
-  },
-  createSalary: async (data: CreateSalaryDto): Promise<Salary> => {
-    const response = await api.post('/salary/salaries', data);
-    return response.data;
-  },
-  updateSalary: async (id: string, data: UpdateSalaryDto): Promise<Salary> => {
-    const response = await api.patch(`/salary/salaries/${id}`, data);
-    return response.data;
-  },
-  deleteSalary: async (id: string): Promise<void> => {
-    await api.delete(`/salary/salaries/${id}`);
-  },
-
-  // Bill methods
-  getBills: async (status?: string): Promise<Bill[]> => {
-    const params = status ? { status } : {};
-    const response = await api.get('/salary/bills', { params });
-    return response.data;
-  },
-  getBill: async (id: string): Promise<Bill> => {
-    const response = await api.get(`/salary/bills/${id}`);
-    return response.data;
-  },
-  createBill: async (data: CreateBillDto): Promise<Bill> => {
-    const response = await api.post('/salary/bills', data);
-    return response.data;
-  },
-  updateBill: async (id: string, data: UpdateBillDto): Promise<Bill> => {
-    const response = await api.patch(`/salary/bills/${id}`, data);
-    return response.data;
-  },
-  deleteBill: async (id: string): Promise<void> => {
-    await api.delete(`/salary/bills/${id}`);
-  },
-
-  // Summary methods
-  getSalarySummary: async (): Promise<SalarySummary> => {
-    const response = await api.get('/salary/summary/salary');
-    return response.data;
-  },
-  getBillSummary: async (): Promise<BillSummary> => {
-    const response = await api.get('/salary/summary/bill');
-    return response.data;
   },
 };
 
